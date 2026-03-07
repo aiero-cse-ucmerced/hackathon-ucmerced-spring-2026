@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { AllToolsSection } from "@/components/AllToolsSection";
 import { Button } from "@/components/Button";
+import { FaqAccordion } from "@/components/FaqAccordion";
 import { JobListingsMarquee } from "@/components/JobListingsMarquee";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { LandingHeroCTA } from "@/components/landing/LandingHeroCTA";
@@ -33,6 +35,22 @@ export default function Home() {
 
       {/* Job Listings Marquee */}
       <JobListingsMarquee />
+
+      {/* FAQ section */}
+      <section className="border-t border-zinc-100 bg-white py-16">
+        <div className="mx-auto max-w-3xl px-6">
+          <h2 className="text-center text-2xl font-semibold tracking-tight text-zinc-900 md:text-3xl">
+            Frequently asked questions
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-sm leading-relaxed text-zinc-500 md:text-base">
+            Quick answers about how UncookedAura matches you to roles and how to
+            get started.
+          </p>
+          <div className="mt-8">
+            <FaqAccordion />
+          </div>
+        </div>
+      </section>
 
       {/* All the tools + brand names (static) */}
       <AllToolsSection />

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { Footer } from "@/components/Footer";
+import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
+import { AuthProvider } from "@/components/AuthProvider";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -23,8 +25,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.variable} flex min-h-screen flex-col font-sans antialiased`}>
-        <main className="flex min-h-0 flex-1 flex-col">{children}</main>
-        <Footer />
+        <AuthProvider>
+          <main className="flex min-h-0 flex-1 flex-col">{children}</main>
+          <ServiceWorkerRegistrar />
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
