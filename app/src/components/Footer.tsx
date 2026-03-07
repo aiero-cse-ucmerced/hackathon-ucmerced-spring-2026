@@ -110,7 +110,7 @@ export function Footer() {
           </span>
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8">
             <Link
-              href="#"
+              href="/privacy-policy"
               className="text-sm text-zinc-500 hover:text-zinc-900"
             >
               Privacy Policy

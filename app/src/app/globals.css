@@ -24,3 +24,64 @@ body {
     transform: translateX(-50%);
   }
 }
+
+/* Onboarding Typeform-style flow */
+@keyframes onboarding-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes onboarding-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+
+@keyframes onboarding-slide-in-back {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes onboarding-slide-out-back {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+.onboarding-step-enter {
+  animation: onboarding-slide-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.onboarding-step-enter-back {
+  animation: onboarding-slide-in-back 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.onboarding-step-exit {
+  animation: onboarding-slide-out 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.onboarding-step-exit-back {
+  animation: onboarding-slide-out-back 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
