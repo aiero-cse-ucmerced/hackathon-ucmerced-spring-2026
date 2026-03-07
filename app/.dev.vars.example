@@ -1,0 +1,5 @@
+# Local Cloudflare Workers dev (copy to .dev.vars, do not commit .dev.vars)
+# See https://developers.cloudflare.com/workers/development-testing/environment-variables
+
+# Use Next.js .env.development when running preview
+NEXTJS_ENV=development

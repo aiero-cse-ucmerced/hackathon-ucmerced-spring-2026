@@ -1,27 +1,25 @@
 "use client";
 
 import { JobCard } from "./JobCard";
-
-const JOBS = [
-  { jobTitle: "SOFTWARE SYSTEM ENGINEER", company: "APPLE" },
-  { jobTitle: "SENIOR FINANCIAL ANAYST", company: "J.P MORGAN AND CHASE" },
-  { jobTitle: "AI RESEARCHER", company: "GOOGLE" },
-  { jobTitle: "AMAZON WAREHOUSE MANAGER", company: "AMAZON" },
-  { jobTitle: "CYBERSECURITY LEAD", company: "CISCO" },
-  { jobTitle: "H.R MANAGER", company: "WALMART INC." },
-];
+import { useJobs } from "@/lib/use-jobs";
 
 const GRID_WIDTH = 280 * 3 + 16 * 2; // 3 cards + 2 gaps
 
-function JobGrid({ blockIndex }: { blockIndex: number }) {
+function JobGrid({
+  blockIndex,
+  jobs,
+}: {
+  blockIndex: number;
+  jobs: { jobTitle: string; company: string }[];
+}) {
   return (
     <div
       className="grid shrink-0 grid-cols-3 grid-rows-2 gap-4"
       style={{ width: GRID_WIDTH }}
     >
-      {JOBS.map((job) => (
+      {jobs.map((job) => (
         <JobCard
-          key={`${blockIndex}-${job.jobTitle}`}
+          key={`${blockIndex}-${job.jobTitle}-${job.company}`}
           jobTitle={job.jobTitle}
           company={job.company}
         />
@@ -31,12 +29,24 @@ function JobGrid({ blockIndex }: { blockIndex: number }) {
 }
 
 export function JobListingsMarquee() {
+  const { jobs, loading } = useJobs({ major: "cs" });
+
+  if (loading) {
+    return (
+      <section className="relative overflow-hidden bg-white py-16">
+        <div className="mx-auto max-w-6xl px-6 text-center text-zinc-500">
+          Loading job listings…
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="relative overflow-hidden bg-white py-16">
       <div className="flex w-max animate-[marquee_50s_linear_infinite] gap-8">
-        <JobGrid blockIndex={0} />
-        <JobGrid blockIndex={1} />
-        <JobGrid blockIndex={2} />
+        <JobGrid blockIndex={0} jobs={jobs} />
+        <JobGrid blockIndex={1} jobs={jobs} />
+        <JobGrid blockIndex={2} jobs={jobs} />
       </div>
     </section>
   );
