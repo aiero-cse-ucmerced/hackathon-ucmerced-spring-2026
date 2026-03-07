@@ -15,6 +15,8 @@ export function useInternships(options: {
   const [items, setItems] = useState<MatchedListing[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const interestsKey = options.interests.slice().sort().join(",");
+
   useEffect(() => {
     let cancelled = false;
 
@@ -41,7 +43,7 @@ export function useInternships(options: {
     return () => {
       cancelled = true;
     };
-  }, [online, options.kind, options.interests, options.major, options.minScore]);
+  }, [online, options.kind, interestsKey, options.major, options.minScore]);
 
   return { items, loading, online };
 }

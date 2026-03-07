@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
@@ -12,9 +12,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  if (!loading && !user) {
-    router.replace("/unauthorized");
-  }
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/unauthorized");
+    }
+  }, [loading, user, router]);
 
   const inDashboard = pathname?.startsWith("/dashboard") ?? false;
 
@@ -22,9 +24,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
       <header className="border-b border-zinc-200 bg-white px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-6">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <Logo />
-          </Link>
+          <Logo href="/dashboard" />
           <nav className="flex items-center gap-4 text-sm font-medium text-zinc-700">
             <Link
               href="/dashboard"
@@ -59,11 +59,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </nav>
         </div>
       </header>
-      <main className="px-6 py-10">
+      <div className="px-6 py-10">
         <div className="mx-auto max-w-6xl">
           {loading ? <AuthCardSkeleton /> : children}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

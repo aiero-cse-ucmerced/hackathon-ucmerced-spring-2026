@@ -44,8 +44,13 @@ export default function ProfilePage() {
     }
   }, [profile, user]);
 
+  useEffect(() => {
+    if (!user) {
+      router.replace("/unauthorized");
+    }
+  }, [user, router]);
+
   if (!user) {
-    router.replace("/unauthorized");
     return null;
   }
 
