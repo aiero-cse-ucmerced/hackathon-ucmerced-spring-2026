@@ -15,6 +15,7 @@ export interface UserProfile {
   pastExperiences: string[];
   completedIds?: string[];
   savedIds?: string[];
+  minScore?: number;
 }
 
 export const WORKING_FIELD_INTERESTS = [
@@ -109,9 +110,23 @@ export async function getProfile(token?: string): Promise<UserProfile | null> {
 
 /**
  * Updates user profile (onboarding or profile edit). Persists to Workers when available, else localStorage.
+ * Accepts name, email, major to seed from auth when completing onboarding.
  */
 export async function patchProfile(
-  payload: Partial<Pick<UserProfile, "interests" | "strengths" | "pastExperiences">>,
+  payload: Partial<
+    Pick<
+      UserProfile,
+      | "name"
+      | "email"
+      | "major"
+      | "interests"
+      | "strengths"
+      | "pastExperiences"
+      | "completedIds"
+      | "savedIds"
+      | "minScore"
+    >
+  >,
   token?: string
 ): Promise<UserProfile> {
   const next: UserProfile = {
@@ -142,9 +157,15 @@ export async function patchProfile(
     const merged: UserProfile = {
       ...existing,
       ...next,
+      name: payload.name ?? existing?.name,
+      email: payload.email ?? existing?.email,
+      major: payload.major ?? existing?.major,
       interests: payload.interests ?? existing?.interests ?? [],
       strengths: payload.strengths ?? existing?.strengths ?? [],
       pastExperiences: payload.pastExperiences ?? existing?.pastExperiences ?? [],
+      completedIds: payload.completedIds ?? existing?.completedIds,
+      savedIds: payload.savedIds ?? existing?.savedIds,
+      minScore: payload.minScore ?? existing?.minScore,
     };
     localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(merged));
     setOnboardingComplete();
