@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,36 +13,59 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/AuthProvider";
-import { useProfile, type Profile } from "@/lib/use-profile";
+import {
+  getProfile,
+  patchProfile,
+  WORKING_FIELD_INTERESTS,
+  STRENGTH_OPTIONS,
+  type UserProfile,
+} from "@/lib/internships-api";
+import { getStoredToken } from "@/lib/auth";
 
-const INTEREST_TAGS = ["web-dev", "data", "design", "finance"] as const;
+const MIN_INTERESTS = 3;
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { profile, save, loading } = useProfile();
-
-  const [draft, setDraft] = useState<Profile>({
-    name: user?.name ?? "",
-    major: user?.major,
-    interests: [],
-    outcomes: "",
-  });
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (profile) {
-      setDraft(profile);
-      return;
-    }
-    if (user) {
-      setDraft((current) => ({
-        ...current,
+  const [draft, setDraft] = useState<UserProfile>({
+    interests: [],
+    strengths: [],
+    pastExperiences: [],
+  });
+
+  const loadProfile = useCallback(async () => {
+    const token = getStoredToken();
+    const p = await getProfile(token ?? undefined);
+    setProfile(p);
+    if (p) {
+      setDraft({
+        name: p.name,
+        email: p.email,
+        major: p.major,
+        interests: p.interests ?? [],
+        strengths: p.strengths ?? [],
+        pastExperiences: p.pastExperiences ?? [],
+      });
+    } else if (user) {
+      setDraft({
         name: user.name,
+        email: user.email,
         major: user.major,
-      }));
+        interests: [],
+        strengths: [],
+        pastExperiences: [],
+      });
     }
-  }, [profile, user]);
+  }, [user]);
+
+  useEffect(() => {
+    loadProfile().finally(() => setLoading(false));
+  }, [loadProfile]);
 
   useEffect(() => {
     if (!user) {
@@ -50,35 +73,70 @@ export default function ProfilePage() {
     }
   }, [user, router]);
 
+  const toggleInterest = useCallback((value: string) => {
+    setDraft((current) => {
+      const exists = current.interests.includes(value);
+      return {
+        ...current,
+        interests: exists
+          ? current.interests.filter((x) => x !== value)
+          : [...current.interests, value],
+      };
+    });
+  }, []);
+
+  const toggleStrength = useCallback((value: string) => {
+    setDraft((current) => {
+      const exists = current.strengths.includes(value);
+      return {
+        ...current,
+        strengths: exists
+          ? current.strengths.filter((x) => x !== value)
+          : [...current.strengths, value],
+      };
+    });
+  }, []);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setSavedMessage(null);
+    try {
+      const token = getStoredToken();
+      await patchProfile(
+        {
+          name: draft.name,
+          email: draft.email,
+          major: draft.major,
+          interests: draft.interests,
+          strengths: draft.strengths,
+          pastExperiences: draft.pastExperiences,
+        },
+        token ?? undefined
+      );
+      setSavedMessage("Profile updated. Your matches will use these preferences.");
+      await loadProfile();
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (!user) {
     return null;
   }
 
-  function toggleInterest(tag: (typeof INTEREST_TAGS)[number]) {
-    setDraft((current) => {
-      const exists = current.interests.includes(tag);
-      return {
-        ...current,
-        interests: exists
-          ? current.interests.filter((value) => value !== tag)
-          : [...current.interests, tag],
-      };
-    });
-  }
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    save(draft);
-    setSavedMessage("Profile updated. Your matches will use these interests.");
-  }
+  const pastExperiencesText =
+    Array.isArray(draft.pastExperiences) && draft.pastExperiences.length > 0
+      ? draft.pastExperiences.join("\n")
+      : "";
 
   return (
     <Card className="mx-auto mt-10 w-full max-w-2xl">
       <CardHeader>
-        <CardTitle>Profile &amp; interests</CardTitle>
+        <CardTitle>Profile &amp; preferences</CardTitle>
         <CardDescription>
-          Tell UncookedAura what you&apos;re studying and what you want from
-          internships so we can match you more accurately.
+          Same options as onboarding. Update your interests, strengths, and
+          past experiences so we can match you accurately.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -88,12 +146,9 @@ export default function ProfilePage() {
               <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
-                value={draft.name}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    name: event.target.value,
-                  }))
+                value={draft.name ?? ""}
+                onChange={(e) =>
+                  setDraft((c) => ({ ...c, name: e.target.value }))
                 }
                 required
               />
@@ -103,11 +158,8 @@ export default function ProfilePage() {
               <Input
                 id="major"
                 value={draft.major ?? ""}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    major: event.target.value,
-                  }))
+                onChange={(e) =>
+                  setDraft((c) => ({ ...c, major: e.target.value }))
                 }
                 placeholder="e.g. CSE, CS, Applied Math"
               />
@@ -117,24 +169,53 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <Label>Interests</Label>
             <p className="text-sm text-zinc-600">
-              Choose a few themes so we can generate better queries and scores
-              for you.
+              Select at least {MIN_INTERESTS} areas (same as onboarding).
             </p>
             <div className="flex flex-wrap gap-2 pt-1">
-              {INTEREST_TAGS.map((tag) => {
-                const active = draft.interests.includes(tag);
+              {WORKING_FIELD_INTERESTS.map((label) => {
+                const active = draft.interests.includes(label);
                 return (
                   <button
-                    key={tag}
+                    key={label}
                     type="button"
-                    onClick={() => toggleInterest(tag)}
+                    onClick={() => toggleInterest(label)}
                     className={`rounded-full border px-3 py-1 text-sm ${
                       active
                         ? "border-zinc-900 bg-zinc-900 text-white"
                         : "border-zinc-300 bg-white text-zinc-800 hover:border-zinc-400"
                     }`}
                   >
-                    {tag}
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            {draft.interests.length > 0 &&
+              draft.interests.length < MIN_INTERESTS && (
+                <p className="text-sm text-amber-600">
+                  Select at least {MIN_INTERESTS - draft.interests.length} more.
+                </p>
+              )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Strengths</Label>
+            <p className="text-sm text-zinc-600">Optional.</p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {STRENGTH_OPTIONS.map((label) => {
+                const active = draft.strengths.includes(label);
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => toggleStrength(label)}
+                    className={`rounded-full border px-3 py-1 text-sm ${
+                      active
+                        ? "border-zinc-900 bg-zinc-900 text-white"
+                        : "border-zinc-300 bg-white text-zinc-800 hover:border-zinc-400"
+                    }`}
+                  >
+                    {label}
                   </button>
                 );
               })}
@@ -142,32 +223,41 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="outcomes">Outcomes (optional)</Label>
-            <Input
-              id="outcomes"
-              value={draft.outcomes ?? ""}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  outcomes: event.target.value,
+            <Label htmlFor="past-experiences">Past experiences</Label>
+            <p className="text-sm text-zinc-600">
+              One per line or comma-separated (optional).
+            </p>
+            <textarea
+              id="past-experiences"
+              value={pastExperiencesText}
+              onChange={(e) =>
+                setDraft((c) => ({
+                  ...c,
+                  pastExperiences: e.target.value
+                    .split(/[\n,;]/)
+                    .map((s) => s.trim())
+                    .filter(Boolean),
                 }))
               }
-              placeholder="e.g. Entry-level at big tech, internship in finance"
+              placeholder="e.g. Campus club treasurer, summer volunteer, class project lead..."
+              rows={4}
+              className="w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/20"
             />
           </div>
 
-          {savedMessage && !loading && (
+          {savedMessage && (
             <p className="text-sm text-emerald-700" role="status">
               {savedMessage}
             </p>
           )}
 
           <div className="flex items-center justify-between pt-2">
-            <Button type="submit">Save profile</Button>
+            <Button type="submit" disabled={saving || loading}>
+              {saving ? "Saving…" : "Save profile"}
+            </Button>
           </div>
         </form>
       </CardContent>
     </Card>
   );
 }
-

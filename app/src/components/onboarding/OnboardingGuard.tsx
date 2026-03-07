@@ -14,7 +14,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isOnboardingComplete()) {
-      router.replace("/");
+      router.replace("/dashboard");
     }
   }, [router]);
 

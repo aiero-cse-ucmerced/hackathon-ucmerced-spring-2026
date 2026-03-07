@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/components/AuthProvider";
 import { AuthCardSkeleton } from "@/components/skeleton/AuthCardSkeleton";
+import { isOnboardingComplete } from "@/lib/internships-api";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, loading, signOut } = useAuth();
@@ -15,8 +16,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/unauthorized");
+      return;
     }
-  }, [loading, user, router]);
+    if (!loading && user && !isOnboardingComplete() && pathname !== "/onboarding") {
+      router.replace("/onboarding");
+    }
+  }, [loading, user, pathname, router]);
 
   const inDashboard = pathname?.startsWith("/dashboard") ?? false;
 

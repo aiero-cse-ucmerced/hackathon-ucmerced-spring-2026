@@ -10,6 +10,12 @@ import {
   setOnboardingComplete,
 } from "@/lib/internships-api";
 
+export type OnboardingFlowAuth = {
+  name?: string;
+  email?: string;
+  major?: string;
+} | null;
+
 const MIN_INTERESTS = 3;
 const TRANSITION_MS = 320;
 
@@ -132,7 +138,13 @@ function StepContentExperiences({
   );
 }
 
-export function OnboardingFlow() {
+export function OnboardingFlow({
+  user = null,
+  token = null,
+}: {
+  user?: OnboardingFlowAuth;
+  token?: string | null;
+} = {}) {
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
   const [direction, setDirection] = useState<"forward" | "back">("forward");
@@ -201,17 +213,23 @@ export function OnboardingFlow() {
   }, [isFirst, animating, router, stepIndex]);
 
   async function submitAndRedirect() {
-    const token = undefined; // TODO: from auth context when available
     const experiencesList = pastExperiences
       .split(/[\n,;]/)
       .map((s) => s.trim())
       .filter(Boolean);
     await patchProfile(
-      { interests, strengths, pastExperiences: experiencesList },
-      token
+      {
+        name: user?.name,
+        email: user?.email,
+        major: user?.major,
+        interests,
+        strengths,
+        pastExperiences: experiencesList,
+      },
+      token ?? undefined
     );
     setOnboardingComplete();
-    router.push("/");
+    router.push("/dashboard");
   }
 
   const progress = ((stepIndex + 1) / STEPS.length) * 100;
