@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import Script from "next/script";
 import { Logo } from "@/components/Logo";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
@@ -15,11 +14,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
       </div>
-      <Script
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-        async
-        defer
-      />
     </div>
   );
 }

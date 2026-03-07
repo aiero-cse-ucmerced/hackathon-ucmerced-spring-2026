@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ export default function LoginPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!online) {
-      setError("Connect to the internet to sign in.");
+      setError("Connect to the internet to login.");
       return;
     }
 
@@ -51,28 +52,53 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Sign in with email</CardTitle>
-        <CardDescription>
-          Enter your details to access your job matches and saved listings.
-        </CardDescription>
+    <Card className="mx-auto w-full max-w-md shadow-md">
+      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-4">
+        <div className="space-y-1.5">
+          <CardTitle className="text-xl font-semibold tracking-tight text-zinc-900">
+            Login to your account
+          </CardTitle>
+          <CardDescription className="text-sm text-zinc-500">
+            Enter your email below to login to your account.
+          </CardDescription>
+        </div>
+        <Link
+          href="/signup"
+          className="shrink-0 text-sm font-medium text-zinc-900 hover:text-zinc-700"
+        >
+          Sign Up
+        </Link>
       </CardHeader>
-      <CardContent>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
+      <CardContent className="space-y-6">
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-medium text-zinc-900">
+              Email
+            </Label>
             <Input
               id="email"
               type="email"
               autoComplete="email"
+              placeholder="m@example.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
+              className="h-11 text-base"
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-sm font-medium text-zinc-900">
+                Password
+              </Label>
+              <button
+                type="button"
+                onClick={() => router.push("/login/forgot-password")}
+                className="text-sm font-medium text-zinc-700 hover:text-zinc-900"
+              >
+                Forgot your password?
+              </button>
+            </div>
             <Input
               id="password"
               type="password"
@@ -80,6 +106,7 @@ export default function LoginPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
+              className="h-11 text-base"
             />
           </div>
           {error && (
@@ -89,35 +116,27 @@ export default function LoginPage() {
           )}
           {!online && !error && (
             <p className="text-sm text-amber-600">
-              You&apos;re offline. Connect to the internet to sign in.
+              You&apos;re offline. Connect to the internet to login.
             </p>
           )}
-          <div className="flex items-center justify-between pt-2">
-            <Button
-              type="submit"
-              disabled={disabled}
-              className="w-full"
-            >
-              {submitting ? "Signing in…" : "Sign in"}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            disabled={disabled}
+            size="lg"
+            className="h-11 w-full text-base font-medium"
+          >
+            {submitting ? "Logging in…" : "Login"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-11 w-full text-base font-medium"
+            onClick={() => {}}
+          >
+            Login with Google
+          </Button>
         </form>
-        <div className="mt-4 flex flex-col gap-1 text-sm text-zinc-600">
-          <button
-            type="button"
-            className="text-left text-sm text-zinc-700 underline underline-offset-2"
-            onClick={() => router.push("/login/forgot-password")}
-          >
-            Forgot password?
-          </button>
-          <button
-            type="button"
-            className="text-left text-sm text-zinc-700 underline underline-offset-2"
-            onClick={() => router.push("/signup")}
-          >
-            Don&apos;t have an account? Sign up
-          </button>
-        </div>
       </CardContent>
     </Card>
   );
