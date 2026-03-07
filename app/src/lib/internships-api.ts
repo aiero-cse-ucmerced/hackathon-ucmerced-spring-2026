@@ -1,60 +1,173 @@
-import type { InternshipKind, MatchedListing } from "@/app/api/internships/route";
+/**
+ * UncookedAura – Profile & internships API client.
+ * Used for onboarding and dashboard; calls Workers profile endpoints when available.
+ */
 
-export interface FetchInternshipsParams {
-  type?: InternshipKind;
-  interests?: string[];
+import { env } from "./env";
+
+export interface UserProfile {
+  name?: string;
+  email?: string;
   major?: string;
-  location?: string;
-  minScore?: number;
-  page?: number;
+  avatarUrl?: string | null;
+  interests: string[];
+  strengths: string[];
+  pastExperiences: string[];
+  completedIds?: string[];
+  savedIds?: string[];
 }
 
-export interface FetchInternshipsResponse {
-  items: MatchedListing[];
-  kind: InternshipKind;
-}
+export const WORKING_FIELD_INTERESTS = [
+  "Web Development",
+  "Data Science & Analytics",
+  "Software Engineering",
+  "Product Management",
+  "UX / Product Design",
+  "Marketing & Growth",
+  "Finance & Accounting",
+  "Research & Lab",
+  "Consulting",
+  "Content & Writing",
+  "DevOps & Cloud",
+  "Mobile Development",
+  "Cybersecurity",
+  "HR & Recruiting",
+  "Operations",
+  "Sales & Business Dev",
+] as const;
 
-export async function fetchInternships(
-  params: FetchInternshipsParams = {},
-): Promise<FetchInternshipsResponse> {
-  const search = new URLSearchParams();
+export type WorkingFieldInterest = (typeof WORKING_FIELD_INTERESTS)[number];
 
-  if (params.type) search.set("type", params.type);
-  if (params.interests && params.interests.length > 0) {
-    search.set("interests", params.interests.join(","));
-  }
-  if (params.major) search.set("major", params.major);
-  if (params.location) search.set("location", params.location);
-  if (typeof params.minScore === "number") {
-    search.set("minScore", String(params.minScore));
-  }
-  if (typeof params.page === "number") {
-    search.set("page", String(params.page));
-  }
+export const STRENGTH_OPTIONS = [
+  "Problem solving",
+  "Communication",
+  "Leadership",
+  "Technical skills",
+  "Creativity",
+  "Analytical thinking",
+  "Collaboration",
+  "Time management",
+  "Adaptability",
+  "Attention to detail",
+  "Research",
+  "Writing",
+] as const;
 
-  const query = search.toString();
-  const url = query ? `/api/internships?${query}` : "/api/internships";
+const PROFILE_STORAGE_KEY = "uncookedaura_profile";
+const ONBOARDING_DONE_KEY = "uncookedaura_onboarding_done";
 
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
-  });
-
-  if (!res.ok) {
-    console.warn(
-      "[UncookedAura] Internships API error",
-      res.status,
-      await res.text(),
-    );
-    return { items: [], kind: params.type ?? "internship" };
-  }
-
-  const json = (await res.json()) as FetchInternshipsResponse;
-  return {
-    items: Array.isArray(json.items) ? json.items : [],
-    kind: json.kind ?? (params.type ?? "internship"),
+function buildHeaders(token?: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
   };
+  if (env.apiKey) headers["X-API-Key"] = env.apiKey;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return headers;
 }
 
+/**
+ * Fetches user profile from Workers API. Falls back to localStorage when API is unavailable.
+ */
+export async function getProfile(token?: string): Promise<UserProfile | null> {
+  if (env.useWorkersApi && token) {
+    try {
+      const url = `${env.workersApiUrl}/api/profile`;
+      const res = await fetch(url, { method: "GET", headers: buildHeaders(token) });
+      if (res.ok) {
+        const data = (await res.json()) as UserProfile;
+        return {
+          ...data,
+          interests: data.interests ?? [],
+          strengths: data.strengths ?? [],
+          pastExperiences: data.pastExperiences ?? [],
+        };
+      }
+    } catch (e) {
+      console.warn("[UncookedAura] getProfile failed:", e);
+    }
+  }
+
+  if (typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw) as UserProfile;
+        return {
+          ...data,
+          interests: data.interests ?? [],
+          strengths: data.strengths ?? [],
+          pastExperiences: data.pastExperiences ?? [],
+        };
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return null;
+}
+
+/**
+ * Updates user profile (onboarding or profile edit). Persists to Workers when available, else localStorage.
+ */
+export async function patchProfile(
+  payload: Partial<Pick<UserProfile, "interests" | "strengths" | "pastExperiences">>,
+  token?: string
+): Promise<UserProfile> {
+  const next: UserProfile = {
+    interests: payload.interests ?? [],
+    strengths: payload.strengths ?? [],
+    pastExperiences: payload.pastExperiences ?? [],
+  };
+
+  if (env.useWorkersApi && token) {
+    try {
+      const url = `${env.workersApiUrl}/api/profile`;
+      const res = await fetch(url, {
+        method: "PATCH",
+        headers: buildHeaders(token),
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as UserProfile;
+        return { ...next, ...data };
+      }
+    } catch (e) {
+      console.warn("[UncookedAura] patchProfile failed:", e);
+    }
+  }
+
+  if (typeof window !== "undefined") {
+    const existing = await getProfile(token);
+    const merged: UserProfile = {
+      ...existing,
+      ...next,
+      interests: payload.interests ?? existing?.interests ?? [],
+      strengths: payload.strengths ?? existing?.strengths ?? [],
+      pastExperiences: payload.pastExperiences ?? existing?.pastExperiences ?? [],
+    };
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(merged));
+    setOnboardingComplete();
+    return merged;
+  }
+
+  return next;
+}
+
+export function isOnboardingComplete(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(ONBOARDING_DONE_KEY) === "true";
+}
+
+export function setOnboardingComplete(): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(ONBOARDING_DONE_KEY, "true");
+  }
+}
+
+export function clearOnboardingState(): void {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(ONBOARDING_DONE_KEY);
+    localStorage.removeItem(PROFILE_STORAGE_KEY);
+  }
+}

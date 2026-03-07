@@ -3,17 +3,13 @@ import { AllToolsSection } from "@/components/AllToolsSection";
 import { Button } from "@/components/Button";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { JobListingsMarquee } from "@/components/JobListingsMarquee";
-import { Logo } from "@/components/Logo";
+import { LandingHeader } from "@/components/landing/LandingHeader";
+import { LandingHeroCTA } from "@/components/landing/LandingHeroCTA";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-white text-zinc-900">
-      {/* Header */}
-      <header className="bg-white px-6 pt-8">
-        <div className="mx-auto max-w-6xl">
-          <Logo />
-        </div>
-      </header>
+      <LandingHeader />
 
       {/* Hero */}
       <section className="px-6 pb-20 pt-16 text-center md:pb-28 md:pt-24">
@@ -31,16 +27,8 @@ export default function Home() {
             your prior experiences.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Link href="/signup">
-              <Button variant="primary" iconAfter="→" asChild={false}>
-                Get Started
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button variant="secondary" asChild={false}>
-                Sign in
-              </Button>
-            </Link>
+            <LandingHeroCTA />
+            <Button variant="secondary">Learn More</Button>
           </div>
         </div>
       </section>

@@ -54,7 +54,7 @@ export function FallbackView({
   const finalTitle = title ?? d.title;
   const finalDescription = description ?? d.description;
   const finalPrimaryLabel = primaryLabel ?? d.primaryLabel;
-  const finalPrimaryHref = primaryHref ?? d.primaryHref;
+  const finalPrimaryHref = primaryHref ?? d.primaryHref ?? "/";
   const finalSecondaryLabel = secondaryLabel ?? d.secondaryLabel;
 
   return (
