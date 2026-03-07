@@ -122,7 +122,7 @@ export function Footer() {
               Terms of Service
             </Link>
             <Link
-              href="#"
+              href="/cookie-policy"
               className="text-sm text-zinc-500 hover:text-zinc-900"
             >
               Cookie Policy
