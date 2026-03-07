@@ -10,11 +10,11 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <Logo />
         </div>
       </header>
-      <main className="px-6 pb-20 pt-12">
+      <div className="px-6 pb-20 pt-12">
         <div className="mx-auto flex max-w-md flex-1 flex-col items-stretch justify-center">
           {children}
         </div>
-      </main>
+      </div>
       <Script
         src="https://challenges.cloudflare.com/turnstile/v0/api.js"
         async
