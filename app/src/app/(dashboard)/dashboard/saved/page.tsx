@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { MatchedInternshipCard } from "@/components/MatchedInternshipCard";
 import { InternshipCardSkeleton } from "@/components/skeleton/InternshipCardSkeleton";
 import { useAuth } from "@/components/AuthProvider";
@@ -18,20 +19,39 @@ export default function SavedPage() {
   const savedIds = profile?.savedIds ?? [];
   const interests = profile?.interests ?? [];
   const major = profile?.major;
+  const minScore = 1;
 
   const {
     items: internships,
-    loading,
+    loading: loadingInternships,
   } = useInternships({
     kind: "internship",
     interests,
     major,
-    minScore: 1,
+    minScore,
   });
 
-  const savedListings = internships.filter((item) =>
-    savedIds.includes(item.id),
+  const {
+    items: entryLevel,
+    loading: loadingEntry,
+  } = useInternships({
+    kind: "entry-level",
+    interests,
+    major,
+    minScore,
+  });
+
+  const allItems = useMemo(
+    () => [...internships, ...entryLevel],
+    [internships, entryLevel],
   );
+
+  const savedListings = useMemo(
+    () => allItems.filter((item) => savedIds.includes(item.id)),
+    [allItems, savedIds],
+  );
+
+  const loading = loadingInternships || loadingEntry;
 
   function remove(id: string) {
     if (!profile) return;
@@ -84,9 +104,10 @@ export default function SavedPage() {
               <button
                 type="button"
                 onClick={() => remove(item.id)}
-                className="text-xs text-zinc-600 underline underline-offset-2"
+                className="text-xs text-zinc-600 underline underline-offset-2 hover:text-zinc-900"
+                aria-label={`Unsave ${item.title}`}
               >
-                Remove from saved
+                Unsave
               </button>
             </div>
           ))}
