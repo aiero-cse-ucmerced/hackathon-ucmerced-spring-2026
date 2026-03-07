@@ -25,6 +25,7 @@ export function Button({
   children,
   icon,
   iconAfter,
+  asChild: _asChild,
   ...props
 }: ButtonProps) {
   return (

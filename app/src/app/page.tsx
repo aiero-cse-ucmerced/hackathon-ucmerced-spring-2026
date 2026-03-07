@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { AllToolsSection } from "@/components/AllToolsSection";
 import { Button } from "@/components/Button";
+import { FaqAccordion } from "@/components/FaqAccordion";
 import { JobListingsMarquee } from "@/components/JobListingsMarquee";
 import { Logo } from "@/components/Logo";
 
@@ -29,16 +31,38 @@ export default function Home() {
             your prior experiences.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Button variant="primary" iconAfter="→">
-              Get Started
-            </Button>
-            <Button variant="secondary">Learn More</Button>
+            <Link href="/signup">
+              <Button variant="primary" iconAfter="→" asChild={false}>
+                Get Started
+              </Button>
+            </Link>
+            <Link href="/login">
+              <Button variant="secondary" asChild={false}>
+                Sign in
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
 
       {/* Job Listings Marquee */}
       <JobListingsMarquee />
+
+      {/* FAQ section */}
+      <section className="border-t border-zinc-100 bg-white py-16">
+        <div className="mx-auto max-w-3xl px-6">
+          <h2 className="text-center text-2xl font-semibold tracking-tight text-zinc-900 md:text-3xl">
+            Frequently asked questions
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-sm leading-relaxed text-zinc-500 md:text-base">
+            Quick answers about how UncookedAura matches you to roles and how to
+            get started.
+          </p>
+          <div className="mt-8">
+            <FaqAccordion />
+          </div>
+        </div>
+      </section>
 
       {/* All the tools + brand names (static) */}
       <AllToolsSection />

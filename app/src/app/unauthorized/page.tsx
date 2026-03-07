@@ -16,7 +16,7 @@ export default function UnauthorizedPage() {
       variant="auth"
       description="Sign in to view this page."
       primaryLabel="Sign in"
-      primaryHref="/"
+        primaryHref="/login"
     />
   );
 }
