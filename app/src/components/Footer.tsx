@@ -32,18 +32,18 @@ export function Footer() {
             <Link
               href="/"
               className="flex items-center gap-2"
-              aria-label="Uncooked home"
+              aria-label="UncookedAura home"
             >
               <span
                 className="h-8 w-8 shrink-0 rounded-lg bg-[#171717]"
                 aria-hidden
               />
               <span className="text-xl font-bold tracking-tight text-zinc-900">
-                Uncooked
+                UncookedAura
               </span>
             </Link>
             <p className="mt-3 text-sm leading-relaxed text-zinc-600">
-              The complete platform to
+              Match internships to your profile—no prior experience required.
             </p>
           </div>
 

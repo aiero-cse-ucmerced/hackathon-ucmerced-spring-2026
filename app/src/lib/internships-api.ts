@@ -171,3 +171,43 @@ export function clearOnboardingState(): void {
     localStorage.removeItem(PROFILE_STORAGE_KEY);
   }
 }
+
+export type InternshipKind = "internship" | "entry-level";
+
+export interface MatchedListing {
+  id: string;
+  title: string;
+  company: string;
+  location?: string;
+  snippet?: string;
+  salary?: string;
+  type?: string;
+  link?: string;
+  source?: string;
+  updated?: string;
+  kind: InternshipKind;
+  score: number;
+}
+
+export async function fetchInternships(params: {
+  type: InternshipKind;
+  interests: string[];
+  major?: string;
+  minScore: number;
+  page?: number;
+}): Promise<{ items: MatchedListing[]; kind: InternshipKind }> {
+  const search = new URLSearchParams();
+  search.set("type", params.type);
+  search.set("interests", params.interests.join(","));
+  if (params.major) search.set("major", params.major);
+  search.set("minScore", String(params.minScore));
+  if (params.page != null) search.set("page", String(params.page));
+
+  const url = `/api/internships?${search.toString()}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    return { items: [], kind: params.type };
+  }
+  const data = (await res.json()) as { items: MatchedListing[]; kind: InternshipKind };
+  return { items: data.items ?? [], kind: data.kind ?? params.type };
+}
