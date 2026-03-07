@@ -35,6 +35,7 @@ export default function OnboardingPage() {
   }
 
   function toggleInterest(tag: (typeof INTEREST_TAGS)[number]) {
+    if (!user) return;
     const base = profile ?? {
       name: user.name,
       major: user.major,
@@ -49,6 +50,7 @@ export default function OnboardingPage() {
   }
 
   function handleContinue() {
+    if (!user) return;
     const base = profile ?? {
       name: user.name,
       major: user.major,
@@ -59,12 +61,12 @@ export default function OnboardingPage() {
     router.replace("/dashboard");
   }
 
-  const current = profile ?? {
+  const current = profile ?? (user ? {
     name: user.name,
     major: user.major,
     interests: [] as string[],
     outcomes: "",
-  };
+  } : { name: "", major: "", interests: [] as string[], outcomes: "" });
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-6 py-16">

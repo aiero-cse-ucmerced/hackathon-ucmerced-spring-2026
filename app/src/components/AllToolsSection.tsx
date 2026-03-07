@@ -86,7 +86,7 @@ export function AllToolsSection() {
                   <span className="h-3 w-3 rounded-full bg-amber-400" />
                   <span className="h-3 w-3 rounded-full bg-emerald-400" />
                 </div>
-                <span className="text-sm text-zinc-500">uteach.com</span>
+                <span className="text-sm text-zinc-500">uncookedaura.aiero.space</span>
                 <div className="flex gap-1 text-zinc-400">
                   <span aria-hidden>‹</span>
                   <span aria-hidden>›</span>

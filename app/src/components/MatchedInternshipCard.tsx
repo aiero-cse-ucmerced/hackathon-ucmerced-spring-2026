@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { MatchedListing } from "@/app/api/internships/route";
+import type { MatchedListing } from "@/lib/internships-api";
 
 export function MatchedInternshipCard({ item }: { item: MatchedListing }) {
   return (

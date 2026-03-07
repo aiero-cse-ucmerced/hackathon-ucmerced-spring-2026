@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { InternshipKind, MatchedListing } from "@/app/api/internships/route";
+import type { InternshipKind, MatchedListing } from "./internships-api";
 import { fetchInternships } from "./internships-api";
 import { useOnlineStatus } from "./use-online-status";
 

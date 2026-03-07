@@ -27,7 +27,7 @@ export function LandingHeroCTA() {
 
   return (
     <Link
-      href="/onboarding"
+      href="/signup"
       className="inline-flex h-12 min-w-[140px] items-center justify-center gap-2 rounded-lg border border-transparent bg-[#171717] px-6 text-base font-medium text-white transition-colors hover:bg-[#2a2a2a] focus-visible:ring-2 focus-visible:ring-[#171717] focus-visible:ring-offset-2"
     >
       Get Started →
