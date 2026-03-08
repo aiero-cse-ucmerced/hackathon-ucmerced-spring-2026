@@ -25,7 +25,7 @@ export function LandingHeader() {
   }, [user, imageError]);
 
   return (
-    <header className="bg-white px-6 pt-8">
+    <header className="border-b border-zinc-100/80 bg-white/95 px-6 py-5 backdrop-blur-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <Logo />
         <nav className="flex items-center gap-4">

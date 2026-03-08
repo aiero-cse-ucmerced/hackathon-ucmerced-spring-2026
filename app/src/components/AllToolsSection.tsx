@@ -46,9 +46,12 @@ function BrandLogo({ logo }: { logo: { filename: string; name: string } }) {
 export function AllToolsSection() {
   return (
     <>
-      {/* Brand logos - from app/public/logos/ */}
-      <section className="border-t border-zinc-100 bg-white py-12 text-sm">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-12 gap-y-4 px-6">
+      {/* Brand logos — social proof: companies students land at */}
+      <section className="border-t border-zinc-100 bg-white py-14 text-sm">
+        <p className="mx-auto mb-8 max-w-2xl text-center text-xs uppercase tracking-wider text-zinc-400 md:text-sm">
+          Roles at companies like these
+        </p>
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-12 gap-y-6 px-6">
           {BANNER_LOGOS.map((logo) => (
             <BrandLogo key={logo.filename} logo={logo} />
           ))}

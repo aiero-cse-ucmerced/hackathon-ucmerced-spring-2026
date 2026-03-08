@@ -8,7 +8,7 @@ export function LandingHeroCTA() {
 
   if (loading) {
     return (
-      <span className="inline-flex h-12 min-w-[140px] items-center justify-center gap-2 rounded-lg border border-transparent bg-zinc-200 px-6 text-base font-medium text-zinc-500">
+      <span className="inline-flex h-14 min-w-[180px] items-center justify-center gap-2 rounded-xl bg-zinc-200 px-8 text-base font-medium text-zinc-500">
         Loading…
       </span>
     );
@@ -18,7 +18,7 @@ export function LandingHeroCTA() {
     return (
       <Link
         href="/dashboard"
-        className="inline-flex h-12 min-w-[140px] items-center justify-center gap-2 rounded-lg border border-transparent bg-[#171717] px-6 text-base font-medium text-white transition-colors hover:bg-[#2a2a2a] focus-visible:ring-2 focus-visible:ring-[#171717] focus-visible:ring-offset-2"
+        className="inline-flex h-14 min-w-[180px] items-center justify-center gap-2 rounded-xl bg-[#171717] px-8 text-base font-semibold text-white shadow-lg shadow-zinc-900/20 transition-all hover:bg-[#2a2a2a] hover:shadow-xl hover:shadow-zinc-900/25 focus-visible:ring-2 focus-visible:ring-[#171717] focus-visible:ring-offset-2"
       >
         Dashboard →
       </Link>
@@ -28,7 +28,7 @@ export function LandingHeroCTA() {
   return (
     <Link
       href="/signup"
-      className="inline-flex h-12 min-w-[140px] items-center justify-center gap-2 rounded-lg border border-transparent bg-[#171717] px-6 text-base font-medium text-white transition-colors hover:bg-[#2a2a2a] focus-visible:ring-2 focus-visible:ring-[#171717] focus-visible:ring-offset-2"
+      className="inline-flex h-14 min-w-[180px] items-center justify-center gap-2 rounded-xl bg-[#171717] px-8 text-base font-semibold text-white shadow-lg shadow-zinc-900/20 transition-all hover:bg-[#2a2a2a] hover:shadow-xl hover:shadow-zinc-900/25 focus-visible:ring-2 focus-visible:ring-[#171717] focus-visible:ring-offset-2"
     >
       Get Started →
     </Link>
