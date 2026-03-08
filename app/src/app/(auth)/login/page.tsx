@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,13 +20,18 @@ export default function LoginPage() {
   const router = useRouter();
   const { signIn } = useAuth();
   const { online } = useOnlineStatus();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const disabled = submitting || !online;
+  const disabled = submitting || (mounted && !online);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -49,6 +54,43 @@ export default function LoginPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // Render a static placeholder until mounted so server and client HTML match (avoids hydration mismatch).
+  if (!mounted) {
+    return (
+      <Card className="mx-auto w-full max-w-md shadow-md">
+        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-4">
+          <div className="space-y-1.5">
+            <CardTitle className="text-xl font-semibold tracking-tight text-zinc-900">
+              Login to your account
+            </CardTitle>
+            <CardDescription className="text-sm text-zinc-500">
+              Enter your email below to login to your account.
+            </CardDescription>
+          </div>
+          <Link
+            href="/signup"
+            className="shrink-0 text-sm font-medium text-zinc-900 hover:text-zinc-700"
+          >
+            Sign Up
+          </Link>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-5" aria-busy="true" aria-label="Loading form">
+            <div className="space-y-2">
+              <div className="h-4 w-16 rounded bg-zinc-200" />
+              <div className="h-11 rounded-md border border-zinc-300 bg-zinc-100" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-4 w-20 rounded bg-zinc-200" />
+              <div className="h-11 rounded-md border border-zinc-300 bg-zinc-100" />
+            </div>
+            <div className="h-11 rounded-md bg-zinc-200" />
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -114,7 +156,7 @@ export default function LoginPage() {
               {error}
             </p>
           )}
-          {!online && !error && (
+          {mounted && !online && !error && (
             <p className="text-sm text-amber-600">
               You&apos;re offline. Connect to the internet to login.
             </p>

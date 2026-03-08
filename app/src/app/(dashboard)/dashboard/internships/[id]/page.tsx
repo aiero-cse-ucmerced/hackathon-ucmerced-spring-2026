@@ -8,6 +8,7 @@ import { InternshipCardSkeleton } from "@/components/skeleton/InternshipCardSkel
 import { useAuth } from "@/components/AuthProvider";
 import { useProfile } from "@/lib/use-profile";
 import { useInternships } from "@/lib/use-internships";
+import { getJobsSearchListing } from "@/lib/jobs-search-cache";
 
 export default function InternshipDetailPage() {
   const params = useParams<{ id: string }>();
@@ -17,6 +18,7 @@ export default function InternshipDetailPage() {
   const { profile, save } = useProfile();
 
   const interests = profile?.interests ?? [];
+  const strengths = profile?.strengths ?? [];
   const major = profile?.major;
   const minScore = profile?.minScore ?? 50;
 
@@ -28,6 +30,7 @@ export default function InternshipDetailPage() {
     interests,
     major,
     minScore,
+    strengths,
   });
 
   const {
@@ -38,12 +41,14 @@ export default function InternshipDetailPage() {
     interests,
     major,
     minScore,
+    strengths,
   });
 
-  const listing = useMemo(
-    () => [...internships, ...entryLevel].find((item) => item.id === id),
-    [internships, entryLevel, id],
-  );
+  const listing = useMemo(() => {
+    const fromJobs = getJobsSearchListing(id);
+    if (fromJobs) return fromJobs;
+    return [...internships, ...entryLevel].find((item) => item.id === id);
+  }, [internships, entryLevel, id]);
 
   const [message, setMessage] = useState<string | null>(null);
 

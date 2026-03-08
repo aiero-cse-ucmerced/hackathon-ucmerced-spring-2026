@@ -34,12 +34,22 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <Link
               href="/dashboard"
               className={
-                inDashboard
+                pathname === "/dashboard"
                   ? "text-zinc-900"
                   : "text-zinc-600 hover:text-zinc-900"
               }
             >
               Dashboard
+            </Link>
+            <Link
+              href="/dashboard/jobs"
+              className={
+                pathname === "/dashboard/jobs"
+                  ? "text-zinc-900"
+                  : "text-zinc-600 hover:text-zinc-900"
+              }
+            >
+              Jobs
             </Link>
             <Link
               href="/dashboard/saved"
@@ -65,7 +75,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               type="button"
               onClick={() => {
                 signOut();
-                router.replace("/login");
+                window.location.href = "/login";
               }}
               className="text-zinc-600 hover:text-zinc-900"
             >
