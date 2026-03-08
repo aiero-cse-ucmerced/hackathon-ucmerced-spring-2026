@@ -14,7 +14,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/AuthProvider";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { useOnlineStatus } from "@/lib/use-online-status";
+import { env } from "@/lib/env";
+import { workerLogin, workerGoogleLogin } from "@/lib/worker-auth-api";
+
+const MIN_PASSWORD_LENGTH = 8;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,29 +34,59 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [token, setToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
   const disabled = submitting || (mounted && !online);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError(null);
+    setFieldErrors({});
+
     if (!online) {
       setError("Connect to the internet to login.");
       return;
     }
 
+    if (!token) {
+      setError("Complete the Turnstile check before logging in.");
+      return;
+    }
+
+    const errors: { email?: string; password?: string } = {};
+    if (!email.trim()) errors.email = "Email is required.";
+    if (!password) {
+      errors.password = "Password is required.";
+    } else if (password.length < MIN_PASSWORD_LENGTH) {
+      errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
     setSubmitting(true);
-    setError(null);
-
     try {
-      if (!email || !password) {
-        setError("Enter both email and password.");
-        return;
+      if (env.useWorkersApi) {
+        const { token: authToken, userId } = await workerLogin({
+          email,
+          password,
+          turnstile_token: token ?? undefined,
+        });
+        signIn(
+          { name: email.split("@")[0] ?? "Student", email },
+          authToken
+        );
+      } else {
+        signIn({ name: email.split("@")[0] ?? "Student", email });
       }
-
-      signIn({ name: email.split("@")[0] ?? "Student", email });
       router.replace("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed.");
     } finally {
       setSubmitting(false);
     }
@@ -123,10 +159,18 @@ export default function LoginPage() {
               autoComplete="email"
               placeholder="m@example.com"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: undefined }));
+              }}
+              invalid={!!fieldErrors.email}
+              aria-invalid={!!fieldErrors.email}
               required
               className="h-11 text-base"
             />
+            {fieldErrors.email && (
+              <p className="text-sm text-red-600" role="alert">{fieldErrors.email}</p>
+            )}
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -144,11 +188,20 @@ export default function LoginPage() {
               id="password"
               type="password"
               autoComplete="current-password"
+              placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: undefined }));
+              }}
+              invalid={!!fieldErrors.password}
+              aria-invalid={!!fieldErrors.password}
               required
               className="h-11 text-base"
             />
+            {fieldErrors.password && (
+              <p className="text-sm text-red-600" role="alert">{fieldErrors.password}</p>
+            )}
           </div>
           {error && (
             <p className="text-sm text-red-600" role="status">
@@ -160,6 +213,7 @@ export default function LoginPage() {
               You&apos;re offline. Connect to the internet to login.
             </p>
           )}
+          <TurnstileWidget onTokenChange={setToken} />
           <Button
             type="submit"
             disabled={disabled}
@@ -168,15 +222,43 @@ export default function LoginPage() {
           >
             {submitting ? "Logging in…" : "Login"}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="h-11 w-full text-base font-medium"
-            onClick={() => {}}
-          >
-            Login with Google
-          </Button>
+          {env.googleClientId ? (
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative w-full">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-zinc-200" />
+                </div>
+                <span className="relative flex justify-center text-xs uppercase tracking-wide text-zinc-500">
+                  Or continue with
+                </span>
+              </div>
+              <GoogleSignInButton
+                clientId={env.googleClientId}
+                disabled={submitting || (mounted && !online)}
+                theme="outline"
+                size="large"
+                useOneTap
+                className="w-full"
+                onSuccess={async ({ idToken, email, name }) => {
+                  setError(null);
+                  if (!env.useWorkersApi) {
+                    setError("Sign in with Google is not configured.");
+                    return;
+                  }
+                  const { token, isNewUser } = await workerGoogleLogin(idToken);
+                  signIn(
+                    {
+                      name: name ?? email?.split("@")[0] ?? "Student",
+                      email: email ?? "",
+                    },
+                    token
+                  );
+                  router.replace(isNewUser ? "/onboarding" : "/dashboard");
+                }}
+                onError={(msg) => setError(msg)}
+              />
+            </div>
+          ) : null}
         </form>
       </CardContent>
     </Card>

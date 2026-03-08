@@ -1,0 +1,5 @@
+self-hosted/
+backend/
+docs/
+app/docs/
+./node_modules/

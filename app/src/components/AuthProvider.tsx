@@ -14,10 +14,13 @@ type AuthUser = {
   major?: string;
 } | null;
 
+const TOKEN_KEY = "uncookedaura_token";
+
 type AuthContextValue = {
   user: AuthUser;
   loading: boolean;
-  signIn: (user: NonNullable<AuthUser>) => void;
+  /** Sign in with user and optional token (from Worker login/signup). Token is stored for API calls. */
+  signIn: (user: NonNullable<AuthUser>, token?: string) => void;
   signOut: () => void;
 };
 
@@ -40,17 +43,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const persistToken = (t: string | undefined) => {
+    try {
+      if (t) window.localStorage.setItem(TOKEN_KEY, t);
+      else window.localStorage.removeItem(TOKEN_KEY);
+    } catch {
+      // Ignore.
+    }
+  };
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       loading,
-      signIn(next) {
+      signIn(next, token) {
         setUser(next);
         try {
           window.localStorage.setItem(
             "uncookedaura:user",
             JSON.stringify(next),
           );
+          persistToken(token);
         } catch {
           // Ignore storage errors.
         }
@@ -59,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         try {
           window.localStorage.removeItem("uncookedaura:user");
+          window.localStorage.removeItem(TOKEN_KEY);
         } catch {
           // Ignore storage errors.
         }

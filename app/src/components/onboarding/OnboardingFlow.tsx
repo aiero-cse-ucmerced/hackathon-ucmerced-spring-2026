@@ -4,11 +4,13 @@ import { useCallback, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import {
+  MAJOR_OPTIONS,
   WORKING_FIELD_INTERESTS,
   STRENGTH_OPTIONS,
   patchProfile,
   setOnboardingComplete,
 } from "@/lib/internships-api";
+import type { MajorOption } from "@/lib/internships-api";
 
 export type OnboardingFlowAuth = {
   name?: string;
@@ -19,21 +21,69 @@ export type OnboardingFlowAuth = {
 const MIN_INTERESTS = 3;
 const TRANSITION_MS = 320;
 
-type Step = "interests" | "strengths" | "experiences";
+type Step = "major" | "interests" | "strengths" | "experiences";
 
-const STEPS: Step[] = ["interests", "strengths", "experiences"];
+const STEPS: Step[] = ["major", "interests", "strengths", "experiences"];
 
 const STEP_LABELS: Record<Step, string> = {
+  major: "What's your major?",
   interests: "What are you interested in?",
   strengths: "What are your strengths?",
   experiences: "Any past experiences to share?",
 };
 
 const STEP_SUBTITLES: Record<Step, string> = {
+  major: "We use this to match you with relevant internships and jobs.",
   interests: "Select at least 3 areas related to your career goals.",
   strengths: "Pick what best describes you (optional).",
   experiences: "Briefly list roles, projects, or activities (optional).",
 };
+
+function StepContentMajor({
+  major,
+  setMajor,
+  userName,
+  userEmail,
+}: {
+  major: MajorOption | "";
+  setMajor: (v: MajorOption | "") => void;
+  userName?: string;
+  userEmail?: string;
+}) {
+  return (
+    <>
+      <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 md:text-3xl">
+        {STEP_LABELS.major}
+      </h2>
+      <p className="mt-2 text-zinc-500">{STEP_SUBTITLES.major}</p>
+      {(userName || userEmail) && (
+        <p className="mt-3 text-sm text-zinc-600">
+          {userName && <span>Hi, {userName}. </span>}
+          {userEmail && <span>We'll use {userEmail} for your profile.</span>}
+        </p>
+      )}
+      <div className="mt-8 flex flex-wrap gap-3">
+        {MAJOR_OPTIONS.map((value) => {
+          const selected = major === value;
+          return (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setMajor(value)}
+              className={`rounded-full border px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
+                selected
+                  ? "border-zinc-900 bg-zinc-900 text-white"
+                  : "border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50"
+              }`}
+            >
+              {value}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
 
 function StepContentInterests({
   interests,
@@ -152,6 +202,9 @@ export function OnboardingFlow({
   const [exitingIndex, setExitingIndex] = useState<number | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [major, setMajor] = useState<MajorOption | "">(
+    (user?.major as MajorOption | undefined) ?? ""
+  );
   const [interests, setInterests] = useState<string[]>([]);
   const [strengths, setStrengths] = useState<string[]>([]);
   const [pastExperiences, setPastExperiences] = useState<string>("");
@@ -160,7 +213,9 @@ export function OnboardingFlow({
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEPS.length - 1;
   const canProceed =
-    step !== "interests" || interests.length >= MIN_INTERESTS;
+    (step === "major" && major !== "") ||
+    (step !== "major" && step !== "interests") ||
+    (step === "interests" && interests.length >= MIN_INTERESTS);
 
   const toggleInterest = useCallback((value: string) => {
     setInterests((prev) =>
@@ -175,7 +230,7 @@ export function OnboardingFlow({
   }, []);
 
   const goNext = useCallback(() => {
-    if (!canProceed && step === "interests") return;
+    if (!canProceed && (step === "interests" || step === "major")) return;
     if (animating) return;
     if (isLast) {
       setAnimating(true);
@@ -221,7 +276,7 @@ export function OnboardingFlow({
       {
         name: user?.name,
         email: user?.email,
-        major: user?.major,
+        major: major || user?.major,
         interests,
         strengths,
         pastExperiences: experiencesList,
@@ -244,6 +299,14 @@ export function OnboardingFlow({
 
   const renderStep = (s: Step, animateClass: string) => (
     <div key={s} className={`absolute inset-0 ${animateClass}`}>
+      {s === "major" && (
+        <StepContentMajor
+          major={major}
+          setMajor={setMajor}
+          userName={user?.name}
+          userEmail={user?.email}
+        />
+      )}
       {s === "interests" && (
         <StepContentInterests interests={interests} toggleInterest={toggleInterest} />
       )}
@@ -299,7 +362,7 @@ export function OnboardingFlow({
         <Button
           variant="primary"
           onClick={goNext}
-          disabled={step === "interests" && !canProceed}
+          disabled={(step === "interests" || step === "major") && !canProceed}
           iconAfter={isLast ? undefined : "→"}
         >
           {isLast ? "Finish" : "Next"}

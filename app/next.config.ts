@@ -4,6 +4,15 @@ import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "logo.clearbit.com",
+        pathname: "/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
