@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ViewTransitionLink } from "@/components/ViewTransitionLink";
 import type { MatchedListing } from "@/lib/internships-api";
 
 export function MatchedInternshipCard({
@@ -17,15 +17,15 @@ export function MatchedInternshipCard({
               {disableTitleLink ? (
                 <span className="block">{item.title}</span>
               ) : (
-                <Link
+                <ViewTransitionLink
                   href={`/dashboard/internships/${encodeURIComponent(item.id)}`}
                   className="hover:underline"
                 >
                   {item.title}
-                </Link>
+                </ViewTransitionLink>
               )}
             </h3>
-            <p className="mt-1 text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <p className="mt-1 text-xs font-medium tracking-wide text-zinc-500">
               {item.company}
             </p>
           </div>

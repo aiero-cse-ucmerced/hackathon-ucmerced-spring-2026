@@ -108,18 +108,19 @@ export default function JobsPage() {
   }
 
   return (
-    <div className="space-y-8" style={{ viewTransitionName: "vt-content" }}>
-      <div>
+    <div className="space-y-10" style={{ viewTransitionName: "vt-content" }}>
+      <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 md:text-3xl">
-          Jobs
+          Find Internships & Entry-Level Jobs
         </h1>
-        <p className="mt-1 text-sm text-zinc-600">
-          Search internships and entry-level roles by title, keywords, or
-          location.
+        <p className="max-w-xl text-sm leading-relaxed text-zinc-600">
+          Search by title, keywords, or location. Results are personalized to
+          your profile and match score.
         </p>
-      </div>
+      </header>
 
-      <JobSearchBar
+      <section aria-label="Search">
+        <JobSearchBar
         keywords={keywords}
         location={location}
         onKeywordsChange={setKeywords}
@@ -127,7 +128,9 @@ export default function JobsPage() {
         onSearch={runSearch}
         disabled={loading}
       />
+      </section>
 
+      <section aria-label="Results">
       {loading ? (
         <div className="space-y-4" role="status" aria-live="polite" aria-label="Loading job results">
           <p className="text-sm text-zinc-500">Loading results…</p>
@@ -138,10 +141,20 @@ export default function JobsPage() {
           </div>
         </div>
       ) : searched && items.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-600">
-          No jobs found. Try different keywords or a broader location.
+        <div className="rounded-xl border border-dashed border-zinc-200 bg-white px-6 py-12 text-center">
+          <p className="text-base font-medium text-zinc-900">
+            No jobs found
+          </p>
+          <p className="mt-2 max-w-md mx-auto text-sm leading-relaxed text-zinc-600">
+            Try different keywords, a broader location, or remove filters to see
+            more results.
+          </p>
         </div>
       ) : items.length > 0 ? (
+        <>
+        <p className="mb-4 text-sm text-zinc-600" role="status">
+          {items.length} {items.length === 1 ? "job" : "jobs"} found
+        </p>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {items.map((item, index) => {
             const isExpanded = expandedId === item.id;
@@ -175,22 +188,28 @@ export default function JobsPage() {
                   />
                   {isExpanded && (
                     <div
-                      className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm"
+                      className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50/80 p-4"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <h2 className="text-sm font-semibold text-zinc-900">
-                        Actions
+                        Quick actions
                       </h2>
-                      <div className="mt-3 flex flex-col gap-2">
+                      <p className="mt-1 text-xs text-zinc-500">
+                        Save for later or mark as completed to unlock more roles.
+                      </p>
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                         <Button
                           type="button"
                           variant="outline"
+                          size="sm"
                           onClick={() => toggleSaved(item.id)}
                         >
-                          {isSaved ? "Unsave" : "Save for later"}
+                          {isSaved ? "Remove from saved" : "Save for later"}
                         </Button>
                         <Button
                           type="button"
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700 focus-visible:ring-blue-600"
                           onClick={() => markCompleted(item.id)}
                         >
                           {isCompleted ? "Completed" : "Mark as completed"}
@@ -201,8 +220,8 @@ export default function JobsPage() {
                           {message}
                         </p>
                       )}
-                      <p className="mt-2 text-xs text-zinc-500">
-                        Click the card again to collapse.
+                      <p className="mt-2 text-xs text-zinc-400">
+                        Tap card to collapse.
                       </p>
                     </div>
                   )}
@@ -211,7 +230,9 @@ export default function JobsPage() {
             );
           })}
         </div>
+        </>
       ) : null}
+      </section>
     </div>
   );
 }

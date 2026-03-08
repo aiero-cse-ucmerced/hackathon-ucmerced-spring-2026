@@ -4,12 +4,13 @@ import { type ReactNode, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
+import { UserMenu } from "@/components/UserMenu";
 import { useAuth } from "@/components/AuthProvider";
 import { AuthCardSkeleton } from "@/components/skeleton/AuthCardSkeleton";
 import { isOnboardingComplete } from "@/lib/internships-api";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -23,14 +24,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     }
   }, [loading, user, pathname, router]);
 
-  const inDashboard = pathname?.startsWith("/dashboard") ?? false;
-
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
-      <header className="border-b border-zinc-200 bg-white px-6 py-4">
+      <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/95 px-6 py-4 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-6">
           <Logo href="/dashboard" />
-          <nav className="flex items-center gap-4 text-sm font-medium text-zinc-700">
+          <nav className="flex items-center gap-5 text-sm font-medium text-zinc-700">
             <Link
               href="/dashboard"
               className={
@@ -72,26 +71,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               Events
             </Link>
             <Link
-              href="/dashboard/profile"
+              href="/dashboard/connections"
               className={
-                pathname === "/dashboard/profile"
+                pathname?.startsWith("/dashboard/connections")
                   ? "text-zinc-900"
                   : "text-zinc-600 hover:text-zinc-900"
               }
             >
-              Profile
+              Connections
             </Link>
-            <button
-              type="button"
-              onClick={() => {
-                signOut();
-                window.location.href = "/login";
-              }}
-              className="text-zinc-600 hover:text-zinc-900"
-            >
-              Sign out
-            </button>
           </nav>
+          <UserMenu showName className="shrink-0" />
         </div>
       </header>
       <div className="px-6 py-10">
