@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { AllToolsSection } from "@/components/AllToolsSection";
-import { Button } from "@/components/Button";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { JobListingsMarquee } from "@/components/JobListingsMarquee";
 import { LandingHeader } from "@/components/landing/LandingHeader";
@@ -28,7 +27,14 @@ export default function Home() {
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <LandingHeroCTA />
-            <Button variant="secondary">Learn More</Button>
+            <Link
+              href="/learn"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-12 min-w-[140px] items-center justify-center gap-2 rounded-lg border border-[#171717] bg-white px-6 text-base font-medium text-[#171717] transition-colors hover:bg-zinc-50 focus-visible:ring-2 focus-visible:ring-[#171717] focus-visible:ring-offset-2"
+            >
+              Learn More
+            </Link>
           </div>
         </div>
       </section>
