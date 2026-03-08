@@ -60,7 +60,7 @@ export default function Error({
         </nav>
 
         <div className="mx-auto mt-14 w-full max-w-lg text-left">
-          <Collapsible defaultValue={false} className="rounded-lg border border-zinc-200 bg-zinc-50/50">
+          <Collapsible defaultOpen={false} className="rounded-lg border border-zinc-200 bg-zinc-50/50">
             <CollapsibleTrigger
               className={cn(
                 "group flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium text-zinc-700",
