@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ViewTransitionLink } from "@/components/ViewTransitionLink";
 
 const PRODUCT_LINKS = [
-  { label: "Features", href: "#" },
-  { label: "Roadmap", href: "#" },
+  { label: "Features", href: "/learn#features" },
+  { label: "Roadmap", href: "/roadmap" },
 ];
 
 const COMPANY_LINKS = [
@@ -88,7 +88,7 @@ export function Footer() {
               Privacy Policy
             </ViewTransitionLink>
             <Link
-              href="#"
+              href="/tos"
               className="text-sm text-zinc-500 hover:text-zinc-900"
             >
               Terms of Service

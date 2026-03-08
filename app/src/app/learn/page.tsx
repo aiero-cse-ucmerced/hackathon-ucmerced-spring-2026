@@ -65,7 +65,7 @@ export default function LearnMorePage() {
         </section>
 
         {/* Features */}
-        <section className="py-12">
+        <section id="features" className="py-12 scroll-mt-24">
           <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 md:text-3xl">
             Features
           </h2>
