@@ -37,4 +37,9 @@ export const env = {
   get useSelfHostedApi(): boolean {
     return this.selfHostedApiUrl.length > 0;
   },
+
+  /** Google OAuth 2.0 Web client ID for Sign in with Google (Google Identity Services). Same value as Worker secret UNCOOKEDAURA_GOOGLE_CLIENT_ID. */
+  get googleClientId(): string {
+    return getEnv("NEXT_PUBLIC_GOOGLE_CLIENT_ID");
+  },
 } as const;

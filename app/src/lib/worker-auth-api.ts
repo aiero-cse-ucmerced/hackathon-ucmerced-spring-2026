@@ -18,15 +18,25 @@ function buildHeaders(): Record<string, string> {
 export interface AuthResponse {
   token: string;
   userId: string;
+  /** Present for Google login: true when user was just created (redirect to onboarding). */
+  isNewUser?: boolean;
 }
 
-/** POST /api/auth/login */
-export async function workerLogin(email: string, password: string): Promise<AuthResponse> {
+/** POST /api/auth/login. Turnstile token required when backend has TURNSTILE_SECRET_KEY set (not used for Google SSO). */
+export async function workerLogin(params: {
+  email: string;
+  password: string;
+  turnstile_token?: string;
+}): Promise<AuthResponse> {
   const url = `${env.workersApiUrl}/api/auth/login`;
   const res = await fetch(url, {
     method: "POST",
     headers: buildHeaders(),
-    body: JSON.stringify({ email: email.trim(), password }),
+    body: JSON.stringify({
+      email: params.email.trim(),
+      password: params.password,
+      turnstile_token: params.turnstile_token,
+    }),
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -62,7 +72,57 @@ export async function workerSignup(params: {
   return res.json() as Promise<AuthResponse>;
 }
 
-/** POST /api/auth/google – body: { id_token } */
+/** POST /api/auth/forgot-password – send 8-digit OTP to email via Brevo. Rate limited. */
+export async function workerForgotPassword(params: {
+  email: string;
+  turnstile_token?: string;
+}): Promise<void> {
+  const url = `${env.workersApiUrl}/api/auth/forgot-password`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: buildHeaders(),
+    body: JSON.stringify({
+      email: params.email.trim().toLowerCase(),
+      turnstile_token: params.turnstile_token,
+    }),
+  });
+  if (res.status === 429) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error || "Too many requests. Try again later.");
+  }
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error || "Failed to send reset email");
+  }
+}
+
+/** POST /api/auth/reset-password – verify OTP and set new password. Rate limited. */
+export async function workerResetPassword(params: {
+  email: string;
+  otp: string;
+  new_password: string;
+}): Promise<void> {
+  const url = `${env.workersApiUrl}/api/auth/reset-password`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: buildHeaders(),
+    body: JSON.stringify({
+      email: params.email.trim().toLowerCase(),
+      otp: params.otp.trim(),
+      new_password: params.new_password,
+    }),
+  });
+  if (res.status === 429) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error || "Too many requests. Try again later.");
+  }
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error || "Invalid or expired code");
+  }
+}
+
+/** POST /api/auth/google – body: { id_token }. Returns isNewUser: true when user was just created (redirect to onboarding). */
 export async function workerGoogleLogin(idToken: string): Promise<AuthResponse> {
   const url = `${env.workersApiUrl}/api/auth/google`;
   const res = await fetch(url, {
@@ -74,5 +134,6 @@ export async function workerGoogleLogin(idToken: string): Promise<AuthResponse> 
     const data = await res.json().catch(() => ({}));
     throw new Error((data as { error?: string }).error || "Google sign-in failed");
   }
-  return res.json() as Promise<AuthResponse>;
+  const data = (await res.json()) as AuthResponse;
+  return { token: data.token, userId: data.userId, isNewUser: data.isNewUser };
 }

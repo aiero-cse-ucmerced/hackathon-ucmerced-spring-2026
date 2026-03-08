@@ -165,6 +165,33 @@ const FALLBACK_JOBS: JoobleJob[] = [
   },
 ];
 
+/** In-memory cache for Jooble responses to stay under ~500 req/day rate limit. TTL 15 min. */
+const JOOBLE_CACHE_TTL_MS = 15 * 60 * 1000;
+const joobleCache = new Map<string, { body: string; expires: number }>();
+
+function joobleCacheKey(params: {
+  kind: InternshipKind;
+  interests: string[];
+  strengths: string[];
+  major?: string;
+  location?: string;
+  keywords?: string;
+  page?: number;
+  minScore: number;
+}): string {
+  const parts = [
+    params.kind,
+    params.interests.slice().sort().join(","),
+    params.strengths.slice().sort().join(","),
+    params.major ?? "",
+    (params.location ?? "").trim().toLowerCase(),
+    (params.keywords ?? "").trim().toLowerCase(),
+    String(params.page ?? 0),
+    String(params.minScore),
+  ];
+  return parts.join("|");
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
@@ -189,6 +216,24 @@ export async function GET(request: Request) {
   const minScore = Number.parseInt(searchParams.get("minScore") ?? "50", 10);
   const pageParam = searchParams.get("page");
   const page = pageParam ? Number.parseInt(pageParam, 10) || undefined : undefined;
+
+  const cacheKey = joobleCacheKey({
+    kind,
+    interests,
+    strengths,
+    major,
+    location,
+    keywords: keywordsOverride,
+    page,
+    minScore,
+  });
+  const now = Date.now();
+  const cached = joobleCache.get(cacheKey);
+  if (cached && cached.expires > now) {
+    return new NextResponse(cached.body, {
+      headers: { "Content-Type": "application/json", "X-Jooble-Cache": "HIT" },
+    });
+  }
 
   let jobs: JoobleJob[] = [];
   try {
@@ -239,9 +284,10 @@ export async function GET(request: Request) {
     });
   }
 
-  return NextResponse.json({
-    items: matched,
-    kind,
+  const body = JSON.stringify({ items: matched, kind });
+  joobleCache.set(cacheKey, { body, expires: now + JOOBLE_CACHE_TTL_MS });
+  return new NextResponse(body, {
+    headers: { "Content-Type": "application/json" },
   });
 }
 

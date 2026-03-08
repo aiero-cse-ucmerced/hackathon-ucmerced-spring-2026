@@ -14,9 +14,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/AuthProvider";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { useOnlineStatus } from "@/lib/use-online-status";
 import { env } from "@/lib/env";
-import { workerLogin } from "@/lib/worker-auth-api";
+import { workerLogin, workerGoogleLogin } from "@/lib/worker-auth-api";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -32,6 +34,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [token, setToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
@@ -45,6 +48,11 @@ export default function LoginPage() {
 
     if (!online) {
       setError("Connect to the internet to login.");
+      return;
+    }
+
+    if (!token) {
+      setError("Complete the Turnstile check before logging in.");
       return;
     }
 
@@ -64,10 +72,14 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       if (env.useWorkersApi) {
-        const { token, userId } = await workerLogin(email, password);
+        const { token: authToken, userId } = await workerLogin({
+          email,
+          password,
+          turnstile_token: token ?? undefined,
+        });
         signIn(
           { name: email.split("@")[0] ?? "Student", email },
-          token
+          authToken
         );
       } else {
         signIn({ name: email.split("@")[0] ?? "Student", email });
@@ -201,6 +213,7 @@ export default function LoginPage() {
               You&apos;re offline. Connect to the internet to login.
             </p>
           )}
+          <TurnstileWidget onTokenChange={setToken} />
           <Button
             type="submit"
             disabled={disabled}
@@ -209,15 +222,43 @@ export default function LoginPage() {
           >
             {submitting ? "Logging in…" : "Login"}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="h-11 w-full text-base font-medium"
-            onClick={() => {}}
-          >
-            Login with Google
-          </Button>
+          {env.googleClientId ? (
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative w-full">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-zinc-200" />
+                </div>
+                <span className="relative flex justify-center text-xs uppercase tracking-wide text-zinc-500">
+                  Or continue with
+                </span>
+              </div>
+              <GoogleSignInButton
+                clientId={env.googleClientId}
+                disabled={submitting || (mounted && !online)}
+                theme="outline"
+                size="large"
+                useOneTap
+                className="w-full"
+                onSuccess={async ({ idToken, email, name }) => {
+                  setError(null);
+                  if (!env.useWorkersApi) {
+                    setError("Sign in with Google is not configured.");
+                    return;
+                  }
+                  const { token, isNewUser } = await workerGoogleLogin(idToken);
+                  signIn(
+                    {
+                      name: name ?? email?.split("@")[0] ?? "Student",
+                      email: email ?? "",
+                    },
+                    token
+                  );
+                  router.replace(isNewUser ? "/onboarding" : "/dashboard");
+                }}
+                onError={(msg) => setError(msg)}
+              />
+            </div>
+          ) : null}
         </form>
       </CardContent>
     </Card>

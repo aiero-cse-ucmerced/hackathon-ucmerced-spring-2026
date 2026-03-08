@@ -308,8 +308,21 @@ export async function fetchInternships(params: {
   if (params.keywords?.trim()) search.set("keywords", params.keywords.trim());
   if (params.location?.trim()) search.set("location", params.location.trim());
 
-  const url = `/api/internships?${search.toString()}`;
-  const res = await fetch(url);
+  const query = search.toString();
+  const fallbackUrl = `/api/internships?${query}`;
+
+  if (env.useWorkersApi) {
+    const workerUrl = `${env.workersApiUrl}/api/internships?${query}`;
+    const headers: Record<string, string> = {};
+    if (env.apiKey) headers["X-API-Key"] = env.apiKey;
+    const res = await fetch(workerUrl, { headers });
+    if (res.ok) {
+      const data = (await res.json()) as { items: MatchedListing[]; kind: InternshipKind };
+      return { items: data.items ?? [], kind: data.kind ?? params.type };
+    }
+  }
+
+  const res = await fetch(fallbackUrl);
   if (!res.ok) {
     return { items: [], kind: params.type };
   }

@@ -13,14 +13,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { useAuth } from "@/components/AuthProvider";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { useOnlineStatus } from "@/lib/use-online-status";
 import { env } from "@/lib/env";
-import { workerSignup } from "@/lib/worker-auth-api";
+import { workerSignup, workerGoogleLogin } from "@/lib/worker-auth-api";
 
-const MAJORS = ["CSE", "CS", "Applied Math", "Others"] as const;
 const MIN_PASSWORD_LENGTH = 8;
 
 export default function SignupPage() {
@@ -32,7 +31,6 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [major, setMajor] = useState<(typeof MAJORS)[number] | "">("");
   const [token, setToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +39,6 @@ export default function SignupPage() {
     email?: string;
     password?: string;
     confirmPassword?: string;
-    major?: string;
   }>({});
 
   const disabled = submitting || !online;
@@ -72,7 +69,6 @@ export default function SignupPage() {
     if (password !== confirmPassword) {
       errors.confirmPassword = "Passwords do not match.";
     }
-    if (!major) errors.major = "Select your major.";
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -82,16 +78,15 @@ export default function SignupPage() {
     setSubmitting(true);
     try {
       if (env.useWorkersApi) {
-        const { token } = await workerSignup({
+        const authRes = await workerSignup({
           name,
           email,
           password,
-          major: major || undefined,
           turnstile_token: token ?? undefined,
         });
-        signIn({ name, email, major }, token);
+        signIn({ name, email }, authRes.token);
       } else {
-        signIn({ name, email, major });
+        signIn({ name, email });
       }
       router.replace("/onboarding");
     } catch (err) {
@@ -187,32 +182,6 @@ export default function SignupPage() {
               <p className="text-sm text-red-600" role="alert">{fieldErrors.confirmPassword}</p>
             )}
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="major">Major</Label>
-            <Select
-              id="major"
-              value={major}
-              onChange={(event) => {
-                setMajor(event.target.value as (typeof MAJORS)[number]);
-                if (fieldErrors.major) setFieldErrors((p) => ({ ...p, major: undefined }));
-              }}
-              invalid={!!fieldErrors.major}
-              aria-invalid={!!fieldErrors.major}
-              required
-            >
-              <option value="" disabled>
-                Select your major
-              </option>
-              {MAJORS.map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </Select>
-            {fieldErrors.major && (
-              <p className="text-sm text-red-600" role="alert">{fieldErrors.major}</p>
-            )}
-          </div>
           <div className="pt-1">
             <TurnstileWidget onTokenChange={setToken} />
           </div>
@@ -233,6 +202,43 @@ export default function SignupPage() {
           >
             {submitting ? "Signing up…" : "Sign up"}
           </Button>
+          {env.googleClientId ? (
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <div className="relative w-full">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-zinc-200" />
+                </div>
+                <span className="relative flex justify-center text-xs uppercase tracking-wide text-zinc-500">
+                  Or sign up with
+                </span>
+              </div>
+              <GoogleSignInButton
+                clientId={env.googleClientId}
+                disabled={submitting || !online}
+                theme="outline"
+                size="large"
+                useOneTap
+                className="w-full"
+                onSuccess={async ({ idToken, email, name }) => {
+                  setError(null);
+                  if (!env.useWorkersApi) {
+                    setError("Sign up with Google is not configured.");
+                    return;
+                  }
+                  const { token } = await workerGoogleLogin(idToken);
+                  signIn(
+                    {
+                      name: name ?? email?.split("@")[0] ?? "Student",
+                      email: email ?? "",
+                    },
+                    token
+                  );
+                  router.replace("/onboarding");
+                }}
+                onError={(msg) => setError(msg)}
+              />
+            </div>
+          ) : null}
         </form>
         <div className="mt-4 text-sm text-zinc-600">
           <ViewTransitionLink
