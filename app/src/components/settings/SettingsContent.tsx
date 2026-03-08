@@ -1,9 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import {
+  startRegistration,
+  browserSupportsWebAuthn,
+  type PublicKeyCredentialCreationOptionsJSON,
+} from "@simplewebauthn/browser";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +16,16 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/AuthProvider";
 import { getStoredToken } from "@/lib/auth";
 import { env } from "@/lib/env";
-import { updateEmail, updatePassword, signOutApi } from "@/lib/account-api";
+import {
+  updateEmail,
+  updatePassword,
+  signOutApi,
+  getPasskeys,
+  deletePasskey,
+  getPasskeyRegisterOptions,
+  finishPasskeyRegistration,
+  type PasskeyInfo,
+} from "@/lib/account-api";
 import { isValidEmail, isValidPassword } from "@/lib/validation";
 
 function Toggle({
@@ -116,7 +130,9 @@ export function SettingsContent() {
     confirm?: string;
   }>({});
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
-  const [passkeys, setPasskeys] = useState(false);
+  const [passkeys, setPasskeys] = useState<PasskeyInfo[]>([]);
+  const [passkeysLoading, setPasskeysLoading] = useState(false);
+  const [passkeyCreating, setPasskeyCreating] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -124,6 +140,60 @@ export function SettingsContent() {
   useEffect(() => {
     if (user?.email) setEmail(user.email);
   }, [user?.email]);
+
+  const canUsePasskeys = env.useSelfHostedApi && !!token;
+
+  const fetchPasskeys = useCallback(async () => {
+    if (!canUsePasskeys || !token) return;
+    setPasskeysLoading(true);
+    try {
+      const list = await getPasskeys(token);
+      setPasskeys(list);
+    } catch {
+      setPasskeys([]);
+    } finally {
+      setPasskeysLoading(false);
+    }
+  }, [canUsePasskeys, token]);
+
+  useEffect(() => {
+    if (canUsePasskeys) fetchPasskeys();
+  }, [canUsePasskeys, fetchPasskeys]);
+
+  const handleCreatePasskey = async () => {
+    if (!token || !canUsePasskeys) return;
+    if (!browserSupportsWebAuthn()) {
+      toast.error("Your browser does not support passkeys.");
+      return;
+    }
+    setPasskeyCreating(true);
+    setStatus(null);
+    try {
+      const options = await getPasskeyRegisterOptions(token);
+      const credential = await startRegistration({
+        optionsJSON: options as unknown as PublicKeyCredentialCreationOptionsJSON,
+      });
+      await finishPasskeyRegistration(token, credential as unknown as Record<string, unknown>);
+      await fetchPasskeys();
+      toast.success("Passkey created. You can now sign in with it.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to create passkey.";
+      toast.error(msg);
+    } finally {
+      setPasskeyCreating(false);
+    }
+  };
+
+  const handleDeletePasskey = async (id: string) => {
+    if (!token) return;
+    try {
+      await deletePasskey(token, id);
+      await fetchPasskeys();
+      toast.success("Passkey removed.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove passkey.");
+    }
+  };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -439,13 +509,55 @@ export function SettingsContent() {
                 It is more secure and convenient than email and password.
               </p>
             </div>
-            <SettingsRow
-              label="Passkeys"
-              description="Use passkeys for passwordless sign-in."
-              action={
-                <Toggle checked={passkeys} onChange={setPasskeys} />
-              }
-            />
+            {canUsePasskeys ? (
+              <div className="space-y-4">
+                <SettingsRow
+                  label="Passkeys"
+                  description="Create passkeys for passwordless sign-in. Use your device biometrics or security key."
+                  action={
+                    <Button
+                      variant="secondary"
+                      onClick={handleCreatePasskey}
+                      disabled={passkeyCreating || !browserSupportsWebAuthn()}
+                    >
+                      {passkeyCreating ? "Creating…" : "Create passkey"}
+                    </Button>
+                  }
+                />
+                {passkeysLoading ? (
+                  <p className="text-sm text-zinc-500">Loading passkeys…</p>
+                ) : passkeys.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-zinc-900">Your passkeys</p>
+                    <ul className="space-y-2">
+                      {passkeys.map((pk) => (
+                        <li
+                          key={pk.id}
+                          className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-4 py-3"
+                        >
+                          <span className="text-sm text-zinc-700">
+                            {pk.deviceName}
+                          </span>
+                          <Button
+                            variant="secondary"
+                            onClick={() => handleDeletePasskey(pk.id)}
+                            className="text-sm text-red-600 hover:bg-red-50 hover:text-red-700"
+                          >
+                            Remove
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <SettingsRow
+                label="Passkeys"
+                description="Passkeys require the self-hosted API. Set NEXT_PUBLIC_SELF_HOSTED_API_URL to enable."
+                action={<span className="text-sm text-zinc-500">Not available</span>}
+              />
+            )}
           </SettingsSection>
 
           {/* Data Privacy */}

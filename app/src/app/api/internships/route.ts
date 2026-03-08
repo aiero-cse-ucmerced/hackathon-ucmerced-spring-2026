@@ -1,4 +1,6 @@
+import { createHash } from "crypto";
 import { NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 type JoobleJob = {
   id: string;
@@ -27,7 +29,7 @@ export interface MatchedListing {
   source?: string;
   updated?: string;
   kind: InternshipKind;
-  /** Fit score, normalized 1–100 based on simple keyword overlap. */
+  /** Fit score 1–100. Percentile-normalized so ~5% are highly matched; Gemini used when configured. */
   score: number;
 }
 
@@ -52,16 +54,17 @@ function buildKeywords(
   return [...base, ...interests, ...(strengths ?? [])].join(" ");
 }
 
-function computeScore(
+/** Raw score 0–100 for ranking. 0 matches = low score so jobs sort to bottom. */
+function computeRawScore(
   job: JoobleJob,
   interests: string[],
   major?: string,
   strengths?: string[],
-) {
+): number {
   const haystack = `${job.title} ${job.snippet ?? ""} ${job.type ?? ""}`.toLowerCase();
 
   if (!haystack.trim()) {
-    return 60;
+    return 30;
   }
 
   let matches = 0;
@@ -84,9 +87,29 @@ function computeScore(
     matches += 1;
   }
 
-  if (matches === 0) return 45;
+  // 0 matches → 15 (bottom of distribution); 1–6+ → 35–100
+  if (matches === 0) return 15;
   const clamped = Math.min(matches, 6);
-  return 50 + clamped * 10;
+  return 35 + Math.round((clamped / 6) * 65);
+}
+
+/**
+ * Normalize scores by percentile so only ~5% get high scores (85–100).
+ * Ensures realistic distribution: top 5% highly matched, rest spread across lower tiers.
+ */
+function normalizeScoresByPercentile(items: MatchedListing[]): MatchedListing[] {
+  if (items.length === 0) return items;
+  const sorted = [...items].sort((a, b) => b.score - a.score);
+  return sorted.map((item, i) => {
+    const p = (i + 1) / sorted.length; // 1 = top
+    let displayScore: number;
+    if (p >= 0.95) displayScore = 85 + Math.round(((p - 0.95) / 0.05) * 15);
+    else if (p >= 0.80) displayScore = 70 + Math.round(((p - 0.80) / 0.15) * 14);
+    else if (p >= 0.50) displayScore = 50 + Math.round(((p - 0.50) / 0.30) * 19);
+    else if (p >= 0.05) displayScore = 25 + Math.round(((p - 0.05) / 0.45) * 24);
+    else displayScore = 15;
+    return { ...item, score: Math.min(100, Math.max(15, Math.round(displayScore))) };
+  });
 }
 
 async function fetchFromJooble(params: {
@@ -168,6 +191,105 @@ const FALLBACK_JOBS: JoobleJob[] = [
 /** In-memory cache for Jooble responses to stay under ~500 req/day rate limit. TTL 15 min. */
 const JOOBLE_CACHE_TTL_MS = 15 * 60 * 1000;
 const joobleCache = new Map<string, { body: string; expires: number }>();
+
+/** Cache for Gemini-scored results. 1h TTL to minimize AI calls. */
+const GEMINI_SCORE_CACHE_TTL_MS = 60 * 60 * 1000;
+const geminiScoreCache = new Map<string, { scores: Map<string, number>; expires: number }>();
+
+function geminiCacheKey(
+  interests: string[],
+  strengths: string[],
+  major: string | undefined,
+  jobIds: string[],
+): string {
+  const payload = [
+    interests.slice().sort().join(","),
+    strengths.slice().sort().join(","),
+    major ?? "",
+    jobIds.slice().sort().join(","),
+  ].join("::");
+  return createHash("sha256").update(payload).digest("hex").slice(0, 32);
+}
+
+/**
+ * Use Gemini to personalize fit scores. Only ~5% of jobs get 85+.
+ * Cached aggressively to reduce AI calls.
+ */
+async function scoreWithGemini(
+  items: MatchedListing[],
+  interests: string[],
+  strengths: string[],
+  major?: string,
+): Promise<Map<string, number> | null> {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim();
+  if (!apiKey || items.length === 0) return null;
+
+  const cacheKey = geminiCacheKey(
+    interests,
+    strengths,
+    major,
+    items.map((i) => i.id),
+  );
+  const now = Date.now();
+  const cached = geminiScoreCache.get(cacheKey);
+  if (cached && cached.expires > now) {
+    return cached.scores;
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const profile = [
+      interests.length ? `Interests: ${interests.join(", ")}` : "",
+      strengths.length ? `Strengths: ${strengths.join(", ")}` : "",
+      major ? `Major: ${major}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const jobList = items
+      .slice(0, 50)
+      .map(
+        (j, i) =>
+          `${i + 1}. [${j.id}] ${j.title} @ ${j.company} | ${(j.snippet ?? "").slice(0, 120)}`,
+      )
+      .join("\n");
+
+    const prompt = `You are scoring job fit for a student. Profile:
+${profile || "No profile yet."}
+
+Jobs to score (id, title, company, snippet):
+${jobList}
+
+For each job, assign a fit score 1-100. IMPORTANT: Only give 85+ to roughly 5% of jobs (the best fits). Most jobs should be 25-70. Return ONLY valid JSON:
+{"scores": {"job_id": score, ...}}
+
+Use the exact job IDs from the list.`;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    if (!text) return null;
+
+    const cleaned = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    const parsed = JSON.parse(cleaned) as { scores?: Record<string, number> };
+    const scores = parsed.scores ?? {};
+    const scoreMap = new Map<string, number>();
+    for (const [id, s] of Object.entries(scores)) {
+      const n = Number(s);
+      if (Number.isFinite(n)) scoreMap.set(id, Math.min(100, Math.max(1, Math.round(n))));
+    }
+
+    geminiScoreCache.set(cacheKey, {
+      scores: scoreMap,
+      expires: now + GEMINI_SCORE_CACHE_TTL_MS,
+    });
+    return scoreMap;
+  } catch (e) {
+    console.warn("[UncookedAura] Gemini scoring failed", e);
+    return null;
+  }
+}
 
 function joobleCacheKey(params: {
   kind: InternshipKind;
@@ -256,7 +378,7 @@ export async function GET(request: Request) {
 
   let matched: MatchedListing[] = jobs
     .map((job) => {
-      const score = computeScore(job, interests, major, strengths);
+      const rawScore = computeRawScore(job, interests, major, strengths);
       return {
         id: job.id,
         title: job.title,
@@ -269,11 +391,24 @@ export async function GET(request: Request) {
         source: job.source,
         updated: job.updated,
         kind,
-        score,
+        score: rawScore,
       } satisfies MatchedListing;
     })
-    .filter((item) => item.score >= minScore)
     .sort((a, b) => b.score - a.score);
+
+  const geminiScores = await scoreWithGemini(matched, interests, strengths, major);
+  if (geminiScores && geminiScores.size > 0) {
+    matched = matched
+      .map((item) => {
+        const geminiScore = geminiScores.get(item.id);
+        const score = geminiScore != null ? geminiScore : item.score;
+        return { ...item, score };
+      })
+      .sort((a, b) => b.score - a.score);
+  }
+
+  matched = normalizeScoresByPercentile(matched);
+  matched = matched.filter((item) => item.score >= minScore);
 
   const rawQuery = keywordsOverride?.trim() ?? "";
   const prefix = rawQuery.toLowerCase().slice(0, 4);

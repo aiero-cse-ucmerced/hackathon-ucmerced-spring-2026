@@ -20,7 +20,7 @@ import { useOnlineStatus } from "@/lib/use-online-status";
 import { env } from "@/lib/env";
 import { workerForgotPassword, workerResetPassword } from "@/lib/worker-auth-api";
 import { toast } from "sonner";
-import { isValidEmail, isValidPassword } from "@/lib/validation";
+import { isValidEmail, isValidOtp, isValidPassword } from "@/lib/validation";
 
 const SUPPORT_LINK = "/contact";
 
@@ -103,7 +103,7 @@ export default function ForgotPasswordPage() {
   function handleVerifyOtp(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    if (otp.replace(/\D/g, "").length !== 8) {
+    if (!isValidOtp(otp)) {
       setError("Enter the 8-digit code from your email.");
       return;
     }
@@ -215,7 +215,7 @@ export default function ForgotPasswordPage() {
                   {error}
                 </p>
               )}
-              <Button type="submit" disabled={otp.replace(/\D/g, "").length !== 8} className="mt-2 w-full">
+              <Button type="submit" disabled={!isValidOtp(otp)} className="mt-2 w-full">
                 Continue
               </Button>
             </form>

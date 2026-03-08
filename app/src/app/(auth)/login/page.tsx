@@ -19,7 +19,10 @@ import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { useOnlineStatus } from "@/lib/use-online-status";
 import { env } from "@/lib/env";
 import { workerLogin, workerGoogleLogin } from "@/lib/worker-auth-api";
+import { getPasskeyAuthOptions, finishPasskeyAuth } from "@/lib/account-api";
 import { isValidEmail, isValidPassword } from "@/lib/validation";
+import { startAuthentication, browserSupportsWebAuthn } from "@simplewebauthn/browser";
+import type { PublicKeyCredentialRequestOptionsJSON } from "@simplewebauthn/browser";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,6 +38,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [token, setToken] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [passkeySubmitting, setPasskeySubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
@@ -86,6 +90,45 @@ export default function LoginPage() {
       setError(err instanceof Error ? err.message : "Login failed.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handlePasskeyLogin() {
+    if (!env.useSelfHostedApi || !env.selfHostedApiUrl) {
+      setError("Passkey login requires self-hosted API.");
+      return;
+    }
+    if (!online) {
+      setError("Connect to the internet to login with passkey.");
+      return;
+    }
+    if (!browserSupportsWebAuthn()) {
+      setError("Your browser does not support passkeys.");
+      return;
+    }
+    setError(null);
+    setPasskeySubmitting(true);
+    try {
+      const options = await getPasskeyAuthOptions(env.selfHostedApiUrl, email.trim() || undefined);
+      const credential = await startAuthentication({
+        optionsJSON: options as unknown as PublicKeyCredentialRequestOptionsJSON,
+      });
+      const { token, email: userEmail, name: userName } = await finishPasskeyAuth(
+        env.selfHostedApiUrl,
+        credential as unknown as Record<string, unknown>
+      );
+      signIn(
+        {
+          name: userName ?? userEmail?.split("@")[0] ?? "User",
+          email: userEmail ?? "",
+        },
+        token
+      );
+      router.replace("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Passkey login failed.");
+    } finally {
+      setPasskeySubmitting(false);
     }
   }
 
@@ -219,7 +262,7 @@ export default function LoginPage() {
           >
             {submitting ? "Logging in…" : "Login"}
           </Button>
-          {env.googleClientId ? (
+          {(env.googleClientId || env.useSelfHostedApi) ? (
             <div className="auth-field-6 flex flex-col items-center gap-2">
               <div className="relative w-full">
                 <div className="absolute inset-0 flex items-center">
@@ -229,31 +272,45 @@ export default function LoginPage() {
                   Or continue with
                 </span>
               </div>
-              <GoogleSignInButton
-                clientId={env.googleClientId}
-                disabled={submitting || (mounted && !online)}
-                theme="outline"
-                size="large"
-                useOneTap
-                className="w-full"
-                onSuccess={async ({ idToken, email, name }) => {
-                  setError(null);
-                  if (!env.useWorkersApi) {
-                    setError("Sign in with Google is not configured.");
-                    return;
-                  }
-                  const { token, isNewUser } = await workerGoogleLogin(idToken);
-                  signIn(
-                    {
-                      name: name ?? email?.split("@")[0] ?? "Student",
-                      email: email ?? "",
-                    },
-                    token
-                  );
-                  router.replace(isNewUser ? "/onboarding" : "/dashboard");
-                }}
-                onError={(msg) => setError(msg)}
-              />
+              {env.googleClientId ? (
+                <GoogleSignInButton
+                  clientId={env.googleClientId}
+                  disabled={submitting || passkeySubmitting || (mounted && !online)}
+                  theme="outline"
+                  size="large"
+                  useOneTap
+                  className="w-full"
+                  onSuccess={async ({ idToken, email, name }) => {
+                    setError(null);
+                    if (!env.useWorkersApi) {
+                      setError("Sign in with Google is not configured.");
+                      return;
+                    }
+                    const { token, isNewUser } = await workerGoogleLogin(idToken);
+                    signIn(
+                      {
+                        name: name ?? email?.split("@")[0] ?? "Student",
+                        email: email ?? "",
+                      },
+                      token
+                    );
+                    router.replace(isNewUser ? "/onboarding" : "/dashboard");
+                  }}
+                  onError={(msg) => setError(msg)}
+                />
+              ) : null}
+              {env.useSelfHostedApi && browserSupportsWebAuthn() ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  disabled={submitting || passkeySubmitting || (mounted && !online)}
+                  onClick={handlePasskeyLogin}
+                  className="auth-field-7 h-11 w-full text-base font-medium"
+                >
+                  {passkeySubmitting ? "Signing in…" : "Login with passkey"}
+                </Button>
+              ) : null}
             </div>
           ) : null}
         </form>

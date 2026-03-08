@@ -5,6 +5,9 @@
  * @see https://blog.sucuri.net/2024/07/input-validation-for-website-security.html
  */
 
+/** OTP length for password reset (8-digit code). */
+export const OTP_LENGTH = 8;
+
 /** Max lengths to prevent DoS and overflow. */
 export const LIMITS = {
   EMAIL_MAX: 254,
@@ -40,6 +43,15 @@ export function isValidEmail(value: string): boolean {
   // Reject path traversal, control chars, obvious injection
   if (/[<>'"\\;]|\/\*|\*\/|\x00-\x1f/.test(trimmed)) return false;
   return true;
+}
+
+/**
+ * Validates OTP for password reset: exactly 8 digits (digits only, strips non-digits).
+ * Backend must use the same rule for alignment.
+ */
+export function isValidOtp(value: string): boolean {
+  const digits = value.replace(/\D/g, "");
+  return digits.length === OTP_LENGTH && /^\d+$/.test(digits);
 }
 
 /**

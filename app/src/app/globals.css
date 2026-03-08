@@ -22,8 +22,10 @@
 .landing-display {
   font-family: var(--font-syne), var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 }
-.landing-header [data-logo-text] {
+/* Logo typography: shared across landing, auth, marketing, and dashboard headers */
+[data-logo-text] {
   font-family: var(--font-syne), var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.03em;
 }
 
 /* Landing: staggered entrance */

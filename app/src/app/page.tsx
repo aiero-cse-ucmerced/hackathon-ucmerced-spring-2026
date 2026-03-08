@@ -38,8 +38,7 @@ export default function Home() {
         <div className="relative mx-auto max-w-4xl">
           {/* Trust signal above fold — judges look for credibility */}
           <p
-            className="landing-animate-1 mb-8 inline-flex items-center gap-2 rounded-full border border-amber-200/80 bg-amber-50/90 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-800"
-            style={{ fontFamily: "var(--font-syne), var(--font-poppins), sans-serif" }}
+            className="landing-animate-1 landing-display mb-8 inline-flex items-center gap-2 rounded-full border border-amber-200/80 bg-amber-50/90 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-800"
           >
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" aria-hidden />
             Free for students · AI-powered matching
@@ -48,14 +47,12 @@ export default function Home() {
           {/* Headline — specific outcome per conversion research */}
           <h1 className="text-center">
             <span
-              className="landing-animate-2 block text-3xl font-medium leading-tight tracking-tight text-zinc-500 md:text-4xl"
-              style={{ fontFamily: "var(--font-syne), var(--font-poppins), sans-serif" }}
+              className="landing-animate-2 landing-display block text-3xl font-medium leading-tight tracking-tight text-zinc-500 md:text-4xl"
             >
               Cook better than
             </span>
             <span
-              className="landing-animate-3 mt-2 block text-5xl font-extrabold leading-[1.05] tracking-tight text-zinc-900 md:text-6xl lg:text-7xl xl:text-8xl"
-              style={{ fontFamily: "var(--font-syne), var(--font-poppins), sans-serif" }}
+              className="landing-animate-3 landing-display mt-2 block text-5xl font-extrabold leading-[1.05] tracking-tight text-zinc-900 md:text-6xl lg:text-7xl xl:text-8xl"
             >
               everyone
             </span>
@@ -64,7 +61,6 @@ export default function Home() {
           {/* Concrete subhead — [Who] + [Outcome] + [Qualifier] */}
           <p
             className="landing-animate-4 mx-auto mt-8 max-w-2xl text-center text-lg leading-relaxed text-zinc-600 md:text-xl"
-            style={{ fontFamily: "var(--font-dm-sans), var(--font-poppins), sans-serif" }}
           >
             Students in CS and engineering find internships that match their interests—no experience required.
           </p>
@@ -98,8 +94,7 @@ export default function Home() {
           <div className="grid gap-12 md:grid-cols-2 md:gap-16">
             <div>
               <h2
-                className="text-lg font-semibold uppercase tracking-widest text-amber-600"
-                style={{ fontFamily: "var(--font-syne), var(--font-poppins), sans-serif" }}
+                className="landing-display text-lg font-semibold uppercase tracking-widest text-amber-600"
               >
                 The problem
               </h2>
@@ -109,8 +104,7 @@ export default function Home() {
             </div>
             <div>
               <h2
-                className="text-lg font-semibold uppercase tracking-widest text-amber-600"
-                style={{ fontFamily: "var(--font-syne), var(--font-poppins), sans-serif" }}
+                className="landing-display text-lg font-semibold uppercase tracking-widest text-amber-600"
               >
                 Our solution
               </h2>
@@ -129,8 +123,7 @@ export default function Home() {
       <section className="border-t border-zinc-100 bg-white py-20 md:py-24">
         <div className="mx-auto max-w-2xl px-6 text-center">
           <span
-            className="block text-6xl font-extrabold leading-none text-amber-500/25"
-            style={{ fontFamily: "var(--font-syne), var(--font-poppins), sans-serif" }}
+            className="landing-display block text-6xl font-extrabold leading-none text-amber-500/25"
             aria-hidden
           >
             &ldquo;
@@ -168,8 +161,7 @@ export default function Home() {
       <section className="border-t border-zinc-100 bg-white py-20 md:py-28">
         <div className="mx-auto max-w-3xl px-6">
           <h2
-            className="text-center text-2xl font-bold tracking-tight text-zinc-900 md:text-3xl"
-            style={{ fontFamily: "var(--font-syne), var(--font-poppins), sans-serif" }}
+            className="landing-display text-center text-2xl font-bold tracking-tight text-zinc-900 md:text-3xl"
           >
             Questions?
           </h2>
@@ -186,8 +178,7 @@ export default function Home() {
       <section className="border-t border-zinc-100 bg-white py-20 md:py-24">
         <div className="mx-auto max-w-2xl px-6 text-center">
           <h2
-            className="text-2xl font-bold tracking-tight text-zinc-900 md:text-3xl"
-            style={{ fontFamily: "var(--font-syne), var(--font-poppins), sans-serif" }}
+            className="landing-display text-2xl font-bold tracking-tight text-zinc-900 md:text-3xl"
           >
             Ready to find your match?
           </h2>

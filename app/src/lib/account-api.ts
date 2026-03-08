@@ -86,3 +86,101 @@ export async function signOutApi(token: string): Promise<void> {
   });
   await checkRes(res);
 }
+
+/** Passkeys require self-hosted API. Returns base URL or empty if not configured. */
+function getPasskeyApiBase(): string {
+  if (env.useSelfHostedApi) return env.selfHostedApiUrl;
+  return "";
+}
+
+export interface PasskeyInfo {
+  id: string;
+  deviceName: string;
+  createdAt: string;
+}
+
+/** GET /api/account/passkeys – list passkeys. Self-hosted only. */
+export async function getPasskeys(token: string): Promise<PasskeyInfo[]> {
+  const base = getPasskeyApiBase();
+  if (!base) throw new Error("Passkeys require self-hosted API");
+  const url = `${base}/api/account/passkeys`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: authHeaders(token),
+  });
+  await checkRes(res);
+  const data = (await res.json()) as { passkeys?: PasskeyInfo[] };
+  return Array.isArray(data.passkeys) ? data.passkeys : [];
+}
+
+/** DELETE /api/account/passkeys/:id – remove passkey. Self-hosted only. */
+export async function deletePasskey(token: string, id: string): Promise<void> {
+  const base = getPasskeyApiBase();
+  if (!base) throw new Error("Passkeys require self-hosted API");
+  const url = `${base}/api/account/passkeys/${encodeURIComponent(id)}`;
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  await checkRes(res);
+}
+
+/** POST /api/passkey/register/options – get WebAuthn registration options. Self-hosted only. */
+export async function getPasskeyRegisterOptions(token: string): Promise<Record<string, unknown>> {
+  const base = getPasskeyApiBase();
+  if (!base) throw new Error("Passkeys require self-hosted API");
+  const url = `${base}/api/passkey/register/options`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: authHeaders(token),
+  });
+  await checkRes(res);
+  return (await res.json()) as Record<string, unknown>;
+}
+
+/** POST /api/passkey/authenticate/options – get WebAuthn auth options. No auth. */
+export async function getPasskeyAuthOptions(baseUrl: string, email?: string): Promise<Record<string, unknown>> {
+  const url = `${baseUrl.replace(/\/$/, "")}/api/passkey/authenticate/options`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(email?.trim() ? { email: email.trim() } : {}),
+  });
+  await checkRes(res);
+  return (await res.json()) as Record<string, unknown>;
+}
+
+/** POST /api/passkey/authenticate/finish – verify assertion, returns token. No auth. */
+export async function finishPasskeyAuth(
+  baseUrl: string,
+  credential: Record<string, unknown>
+): Promise<{ token: string; userId: string; email?: string; name?: string }> {
+  const url = `${baseUrl.replace(/\/$/, "")}/api/passkey/authenticate/finish`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(credential),
+  });
+  await checkRes(res);
+  return (await res.json()) as { token: string; userId: string; email?: string; name?: string };
+}
+
+/** POST /api/passkey/register/finish – verify and store passkey. Self-hosted only. */
+export async function finishPasskeyRegistration(
+  token: string,
+  credential: Record<string, unknown>,
+  deviceName?: string
+): Promise<{ verified: boolean }> {
+  const base = getPasskeyApiBase();
+  if (!base) throw new Error("Passkeys require self-hosted API");
+  const url = `${base}/api/passkey/register/finish`;
+  const body: Record<string, unknown> = { ...credential };
+  if (deviceName?.trim()) body.device_name = deviceName.trim();
+  const res = await fetch(url, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(body),
+  });
+  await checkRes(res);
+  return (await res.json()) as { verified: boolean };
+}
