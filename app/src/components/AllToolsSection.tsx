@@ -1,47 +1,57 @@
-const BRAND_ROW_1 = [
-  "Pinterest",
-  "VAYNERMEDIA",
-  "Disney",
-  "facebook",
-  "VISA",
-  "Booking.com",
+"use client";
+
+import { useState, useCallback } from "react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+
+const BANNER_LOGOS: { filename: string; name: string }[] = [
+  { filename: "Pinterest_logo.png", name: "Pinterest" },
+  { filename: "Visa_logo.png", name: "Visa" },
+  { filename: "Meta_logo.png", name: "Meta" },
+  { filename: "Spotify_logo.png", name: "Spotify" },
+  { filename: "BBC_logo.png", name: "BBC" },
+  { filename: "Apple_logo.png", name: "Apple" },
+  { filename: "Disney_logo.png", name: "Disney" },
 ];
-const BRAND_ROW_2 = [
-  "Google",
-  "Meta",
-  "BBC",
-  "Spotify",
-  "PELOTON",
-  "xero",
-  "NI",
-];
+
+function BrandLogo({ logo }: { logo: { filename: string; name: string } }) {
+  const [failed, setFailed] = useState(false);
+  const src = `/logos/${logo.filename}`;
+
+  const onError = useCallback(() => setFailed(true), []);
+
+  if (failed) {
+    return (
+      <span className="text-sm font-semibold uppercase tracking-wider text-zinc-500">
+        {logo.name}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={logo.name}
+      className="h-[3.75em] w-auto object-contain"
+      onError={onError}
+    />
+  );
+}
 
 export function AllToolsSection() {
   return (
     <>
-      {/* Brand names - static, two rows */}
-      <section className="border-t border-zinc-100 bg-white py-12">
-        <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-8 px-6">
-          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
-            {BRAND_ROW_1.map((name) => (
-              <span
-                key={name}
-                className="text-sm font-semibold uppercase tracking-wider text-zinc-500"
-              >
-                {name}
-              </span>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
-            {BRAND_ROW_2.map((name) => (
-              <span
-                key={name}
-                className="text-sm font-semibold uppercase tracking-wider text-zinc-500"
-              >
-                {name}
-              </span>
-            ))}
-          </div>
+      {/* Brand logos - from app/public/logos/ */}
+      <section className="border-t border-zinc-100 bg-white py-12 text-sm">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-12 gap-y-4 px-6">
+          {BANNER_LOGOS.map((logo) => (
+            <BrandLogo key={logo.filename} logo={logo} />
+          ))}
         </div>
       </section>
 
@@ -71,11 +81,9 @@ export function AllToolsSection() {
             you need
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-700 md:text-lg">
-            Sit elit feugiat turpis sed integer integer accumsan turpis. Sed
-            suspendisse nec lorem mauris.
-          </p>
-          <p className="mx-auto mt-2 text-base leading-relaxed text-zinc-700 md:text-lg">
-            Pharetra, eu imperdiet ipsum ultrices amet, dui sit suspendisse.
+            Match to internships and entry-level roles using your interests and
+            strengths, not just past job titles. See a fit score for every
+            listing and filter by minimum match.
           </p>
 
           <div className="mt-14 flex justify-center">
@@ -86,25 +94,82 @@ export function AllToolsSection() {
                   <span className="h-3 w-3 rounded-full bg-amber-400" />
                   <span className="h-3 w-3 rounded-full bg-emerald-400" />
                 </div>
-                <span className="text-sm text-zinc-500">uncookedaura.aiero.space</span>
+                <span className="text-sm text-zinc-500">app.uncookedaura.com</span>
                 <div className="flex gap-1 text-zinc-400">
                   <span aria-hidden>‹</span>
                   <span aria-hidden>›</span>
                 </div>
               </div>
-              <div className="relative aspect-video w-full overflow-hidden" aria-hidden>
+              <div
+                className="relative aspect-video w-full overflow-hidden"
+                aria-label="Feature overview"
+              >
                 <div className="absolute inset-0 bg-gradient-to-r from-violet-200 via-blue-100 to-zinc-100" />
-                <svg
-                  className="absolute bottom-4 right-8 h-24 w-32 opacity-40"
-                  viewBox="0 0 100 80"
-                  fill="none"
-                  stroke="rgb(245 158 11)"
-                  strokeWidth="1.5"
-                  strokeDasharray="4 3"
+                <Carousel
+                  opts={{ loop: true }}
+                  className="absolute inset-0 flex items-center justify-center"
                 >
-                  <path d="M10 60 Q40 20 70 50 T100 70" />
-                  <path d="M20 50 Q50 30 80 60" />
-                </svg>
+                  <CarouselContent className="ml-0 h-full w-full">
+                    <CarouselItem className="flex items-center justify-center pl-0">
+                      <div className="flex flex-col items-center justify-center gap-3 md:gap-4">
+                        <h3 className="text-[1.5rem] font-semibold text-zinc-800 md:text-[1.75rem]">
+                          Matched internships
+                        </h3>
+                        <div className="rounded-lg bg-white px-4 py-2">
+                          <img
+                            src="/landing_feature_pngs/internship.png"
+                            alt="Matched internships"
+                            className="h-40 w-auto object-contain md:h-52"
+                          />
+                        </div>
+                      </div>
+                    </CarouselItem>
+                    <CarouselItem className="flex items-center justify-center pl-0">
+                      <div className="flex flex-col items-center justify-center gap-3 md:gap-4">
+                        <h3 className="text-[1.5rem] font-semibold text-zinc-800 md:text-[1.75rem]">
+                          Save for later
+                        </h3>
+                        <div className="rounded-lg bg-white px-4 py-2">
+                          <img
+                            src="/landing_feature_pngs/save.png"
+                            alt="Save for later"
+                            className="h-40 w-auto object-contain md:h-52"
+                          />
+                        </div>
+                      </div>
+                    </CarouselItem>
+                    <CarouselItem className="flex items-center justify-center pl-0">
+                      <div className="flex flex-col items-center justify-center gap-3 md:gap-4">
+                        <h3 className="text-[1.5rem] font-semibold text-zinc-800 md:text-[1.75rem]">
+                          Search by keyword
+                        </h3>
+                        <div className="rounded-lg bg-white px-4 py-2">
+                          <img
+                            src="/landing_feature_pngs/search.png"
+                            alt="Search by keyword"
+                            className="h-40 w-auto object-contain md:h-52"
+                          />
+                        </div>
+                      </div>
+                    </CarouselItem>
+                    <CarouselItem className="flex items-center justify-center pl-0">
+                      <div className="flex flex-col items-center justify-center gap-3 md:gap-4">
+                        <h3 className="text-[1.5rem] font-semibold text-zinc-800 md:text-[1.75rem]">
+                          Profile & strengths
+                        </h3>
+                        <div className="rounded-lg bg-white px-4 py-2">
+                          <img
+                            src="/landing_feature_pngs/profile.png"
+                            alt="Profile & strengths"
+                            className="h-40 w-auto object-contain md:h-52"
+                          />
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  </CarouselContent>
+                  <CarouselPrevious className="left-2 border-zinc-300 bg-white/90 hover:bg-white md:left-4" />
+                  <CarouselNext className="right-2 border-zinc-300 bg-white/90 hover:bg-white md:right-4" />
+                </Carousel>
               </div>
             </div>
           </div>
