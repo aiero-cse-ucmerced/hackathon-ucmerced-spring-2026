@@ -218,9 +218,18 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {internships.map((item) => (
-                  <MatchedInternshipCard key={item.id} item={item} />
-                ))}
+                {(() => {
+                  const seen = new Set<string>();
+                  return internships
+                    .filter((item) => {
+                      if (seen.has(item.id)) return false;
+                      seen.add(item.id);
+                      return true;
+                    })
+                    .map((item) => (
+                      <MatchedInternshipCard key={item.id} item={item} />
+                    ));
+                })()}
               </div>
             )}
           </div>
@@ -271,9 +280,19 @@ export default function DashboardPage() {
                 </p>
               ) : (
                 <div className="mt-3 space-y-2">
-                  {entryLevel.slice(0, 3).map((item) => (
-                    <MatchedInternshipCard key={item.id} item={item} />
-                  ))}
+                  {(() => {
+                    const seen = new Set<string>();
+                    return entryLevel
+                      .filter((item) => {
+                        if (seen.has(item.id)) return false;
+                        seen.add(item.id);
+                        return true;
+                      })
+                      .slice(0, 6)
+                      .map((item) => (
+                        <MatchedInternshipCard key={item.id} item={item} />
+                      ));
+                  })()}
                 </div>
               )}
             </>

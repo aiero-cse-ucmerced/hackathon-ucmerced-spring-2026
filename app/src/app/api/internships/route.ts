@@ -178,12 +178,48 @@ const FALLBACK_JOBS: JoobleJob[] = [
     type: "Internship",
   },
   {
+    id: "mock-software-intern",
+    title: "Software Engineering Intern",
+    company: "TechFlow",
+    location: "Austin, TX",
+    snippet:
+      "Contribute to backend services and APIs. Experience with Python or Node.js preferred.",
+    type: "Internship",
+  },
+  {
+    id: "mock-ux-intern",
+    title: "UX Design Intern",
+    company: "Pixel Labs",
+    location: "New York, NY",
+    snippet:
+      "Help design user flows and prototypes. Figma experience a plus.",
+    type: "Internship",
+  },
+  {
+    id: "mock-devops-intern",
+    title: "DevOps Intern",
+    company: "CloudNine",
+    location: "Denver, CO",
+    snippet:
+      "Support CI/CD pipelines and cloud infrastructure. AWS or GCP exposure helpful.",
+    type: "Internship",
+  },
+  {
     id: "mock-entry-level-fe",
     title: "Entry-level Frontend Engineer",
     company: "Aurora Systems",
     location: "Seattle, WA",
     snippet:
       "Build production interfaces with React; ideal for recent graduates.",
+    type: "Full-time",
+  },
+  {
+    id: "mock-entry-level-be",
+    title: "Entry-level Backend Engineer",
+    company: "DataDrive",
+    location: "Boston, MA",
+    snippet:
+      "Develop APIs and data pipelines. Python or Java experience preferred.",
     type: "Full-time",
   },
 ];

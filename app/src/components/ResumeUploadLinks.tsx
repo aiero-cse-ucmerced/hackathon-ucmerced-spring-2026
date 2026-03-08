@@ -5,6 +5,8 @@ interface ResumeUploadLinksProps {
   company: string;
   applyLink?: string;
   className?: string;
+  /** When true, omit the heading/description (for use inside a Card) */
+  compact?: boolean;
 }
 
 const JOB_BOARDS = [
@@ -30,17 +32,22 @@ export function ResumeUploadLinks({
   company,
   applyLink,
   className = "",
+  compact = false,
 }: ResumeUploadLinksProps) {
   const searchQuery = `${title} ${company}`;
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <p className="text-sm font-medium text-zinc-700">
-        Upload your resume
-      </p>
-      <p className="text-xs text-zinc-500">
-        Find this role on recruitment sites to submit your resume.
-      </p>
+      {!compact && (
+        <>
+          <p className="text-sm font-medium text-zinc-700">
+            Upload your resume
+          </p>
+          <p className="text-xs text-zinc-500">
+            Find this role on recruitment sites to submit your resume.
+          </p>
+        </>
+      )}
       <div className="flex flex-wrap gap-2">
         {applyLink && (
           <a

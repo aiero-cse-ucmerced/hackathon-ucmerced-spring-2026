@@ -4,12 +4,15 @@ import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 
+type ConnectionResource = { label: string; href: string; description?: string };
+
 const CONNECTIONS: Record<
   string,
   {
     title: string;
     description: string;
     paragraphs: string[];
+    resources: ConnectionResource[];
   }
 > = {
   "career-center": {
@@ -20,6 +23,12 @@ const CONNECTIONS: Record<
       "Walk-in hours are ideal when you need quick feedback or a sanity check. For deeper work—resume overhauls, career path exploration, or targeted prep—book a dedicated slot. Come prepared with specific questions and a rough draft. The more you bring, the more you’ll get back.",
       "Pro tip: many centers offer industry-specific advisors or alumni panels. Ask what’s available beyond the general desk. A 30-minute chat with someone who’s been in your target field can be worth more than a semester of guessing.",
     ],
+    resources: [
+      { label: "LinkedIn for Students", href: "https://students.linkedin.com/en-us", description: "Career advice, interview prep, and job search tips from LinkedIn." },
+      { label: "LinkedIn Guide to Networking", href: "https://www.linkedin.com/showcase/linkedin-member-guide/", description: "Official guide to building your professional network." },
+      { label: "NACE Career Resources", href: "https://careers.naceweb.org/jobseekers/resources/", description: "National Association of Colleges and Employers—resume, coaching, and career readiness tools." },
+      { label: "Handshake", href: "https://joinhandshake.com", description: "Student job platform used by thousands of campuses—internships and entry-level roles." },
+    ],
   },
   "alumni-network": {
     title: "Alumni network",
@@ -28,6 +37,12 @@ const CONNECTIONS: Record<
       "Your school’s alumni have already crossed the bridge you’re standing on. They’ve navigated the same job market, made the same mistakes, and figured out what actually works. Most are surprisingly willing to share—informational interviews, coffee chats, and referrals are how many of them got their own breaks.",
       "Search by industry, company, or role. When you reach out, be specific: mention what drew you to their path, ask one or two focused questions, and keep it short. A “Hey, can you tell me about your job?” lands differently than “I’m exploring product roles and would love 15 minutes to hear how you transitioned from engineering.”",
       "Don’t treat it as a one-way ask. Share what you’re learning, follow up when you land something, and pay it forward when you’re the one with experience. The network compounds when people actually use it.",
+    ],
+    resources: [
+      { label: "LinkedIn Alumni Search", href: "https://www.linkedin.com/search/results/people/?keywords=alumni", description: "Find alumni by school, company, or industry on LinkedIn." },
+      { label: "LinkedIn: Guide to Informational Interviews", href: "https://www.linkedin.com/business/learning/blog/career-success-tips/guide-to-informational-interviews", description: "How to request, prepare, and follow up after informational interviews." },
+      { label: "HBR: How to Get the Most Out of an Informational Interview", href: "https://hbr.org/2016/02/how-to-get-the-most-out-of-an-informational-interview", description: "Harvard Business Review's practical tips for informational interviews." },
+      { label: "LinkedIn Career Checklist for Students", href: "https://www.linkedin.com/blog/member/archive/career-checklist-for-students-support-network", description: "3 steps to build your support network as a student." },
     ],
   },
   mentorship: {
@@ -38,6 +53,12 @@ const CONNECTIONS: Record<
       "Matching programs typically pair you with someone in your target industry or role. Expect monthly or biweekly check-ins. Come with updates, blockers, and decisions you’re weighing. The more you share, the more useful the relationship becomes.",
       "Mentorship works both ways. Respect their time, show up prepared, and follow through on what you discuss. A mentor who sees you act on their advice is far more likely to go the extra mile—intros, referrals, or a nudge when an opening appears.",
     ],
+    resources: [
+      { label: "LinkedIn for Students", href: "https://students.linkedin.com/en-us", description: "Use LinkedIn to find and connect with potential mentors in your field." },
+      { label: "LinkedIn Guide to Networking", href: "https://www.linkedin.com/showcase/linkedin-member-guide/", description: "Build relationships that can turn into mentorship." },
+      { label: "LinkedIn: Guide to Informational Interviews", href: "https://www.linkedin.com/business/learning/blog/career-success-tips/guide-to-informational-interviews", description: "Informational interviews often lead to ongoing mentorship." },
+      { label: "LinkedIn Career Checklist", href: "https://www.linkedin.com/blog/member/archive/career-checklist-for-students-support-network", description: "Steps to build your support network, including mentors." },
+    ],
   },
   workshops: {
     title: "Workshops",
@@ -47,6 +68,12 @@ const CONNECTIONS: Record<
       "Drop-in sessions are low commitment: show up, get feedback, leave. Structured series often build on each other, so if you’re serious about leveling up, commit to the full run. Bring your actual materials. Generic examples don’t get the same quality of critique.",
       "Check the events calendar regularly. New workshops pop up around recruiting seasons, and the best ones fill quickly. If you can’t make it live, ask if recordings or slides are available—many are.",
     ],
+    resources: [
+      { label: "LinkedIn for Students", href: "https://students.linkedin.com/en-us", description: "Interview prep, common questions, and resume tips." },
+      { label: "LinkedIn Guide to Networking", href: "https://www.linkedin.com/showcase/linkedin-member-guide/", description: "Optimize your LinkedIn profile for recruiters." },
+      { label: "NACE Career Resources", href: "https://careers.naceweb.org/jobseekers/resources/", description: "Resume writing, LinkedIn profile development, and coaching." },
+      { label: "Handshake Events", href: "https://joinhandshake.com", description: "Find campus workshops and employer events on Handshake." },
+    ],
   },
   "employer-events": {
     title: "Employer events",
@@ -55,6 +82,12 @@ const CONNECTIONS: Record<
       "Employer events are your chance to move from “just another application” to “the person I met at the info session.” Recruiters and hiring managers show up specifically to meet candidates. A strong conversation can lead to a direct referral, a fast-tracked interview, or at minimum, a name to drop in your cover letter.",
       "Info sessions cover company culture, roles, and what they look for. Meet-and-greets are more informal—bring questions, be curious, and follow up with a LinkedIn connection or thank-you note. Mention something specific from the conversation so they remember you.",
       "Virtual events are easier to attend but harder to stand out. Turn your camera on, ask a thoughtful question in the chat or Q&A, and reach out afterward. In-person events are gold: dress appropriately, arrive early, and stay for the networking portion. The people who linger often get the best conversations.",
+    ],
+    resources: [
+      { label: "LinkedIn for Students", href: "https://students.linkedin.com/en-us", description: "How to network and follow up after events." },
+      { label: "LinkedIn: How to Find Summer Internships", href: "https://www.linkedin.com/top-content/career/internships/how-to-find-summer-internships-on-linkedin/", description: "Use LinkedIn to discover internships and employer events." },
+      { label: "Handshake", href: "https://joinhandshake.com", description: "Campus job platform—info sessions, career fairs, and employer events." },
+      { label: "LinkedIn Guide to Networking", href: "https://www.linkedin.com/showcase/linkedin-member-guide/", description: "Connect with recruiters you meet at events." },
     ],
   },
 };
@@ -124,6 +157,35 @@ export default function ConnectionDetailPage() {
             </p>
           ))}
         </div>
+      </div>
+
+      <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <h2 className="text-sm font-semibold text-zinc-900">Resources & inspiration</h2>
+        <p className="mt-2 text-sm text-zinc-600">
+          Trusted links to help you take action—LinkedIn, career associations, and more.
+        </p>
+        <ul className="mt-4 space-y-3">
+          {connection.resources.map((r) => (
+            <li key={r.href}>
+              <a
+                href={r.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col gap-0.5 rounded-lg border border-zinc-200 p-3 text-left transition-colors hover:border-zinc-300 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
+              >
+                <span className="text-sm font-medium text-zinc-900 group-hover:text-zinc-700">
+                  {r.label}
+                  <span className="ml-1.5 inline-block text-zinc-400" aria-hidden>
+                    ↗
+                  </span>
+                </span>
+                {r.description && (
+                  <span className="text-xs text-zinc-600">{r.description}</span>
+                )}
+              </a>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

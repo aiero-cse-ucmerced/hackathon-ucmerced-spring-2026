@@ -24,17 +24,36 @@ export function useInternships(options: {
 
     async function load() {
       setLoading(true);
-      const { items: next } = await fetchInternships({
-        type: options.kind,
-        interests: options.interests,
-        major: options.major,
-        minScore: options.minScore,
-        strengths: options.strengths ?? [],
-      });
-      if (!cancelled) {
-        setItems(next);
-        setLoading(false);
+      const [page0, page1] = await Promise.all([
+        fetchInternships({
+          type: options.kind,
+          interests: options.interests,
+          major: options.major,
+          minScore: options.minScore,
+          strengths: options.strengths ?? [],
+          page: 0,
+        }),
+        fetchInternships({
+          type: options.kind,
+          interests: options.interests,
+          major: options.major,
+          minScore: options.minScore,
+          strengths: options.strengths ?? [],
+          page: 1,
+        }),
+      ]);
+      if (cancelled) return;
+      const seen = new Set<string>();
+      const merged: MatchedListing[] = [];
+      for (const item of [...page0.items, ...page1.items]) {
+        if (!seen.has(item.id)) {
+          seen.add(item.id);
+          merged.push(item);
+        }
       }
+      merged.sort((a, b) => b.score - a.score);
+      setItems(merged);
+      setLoading(false);
     }
 
     load();

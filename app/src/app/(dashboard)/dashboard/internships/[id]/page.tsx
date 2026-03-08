@@ -368,23 +368,6 @@ export default function InternshipDetailPage() {
             </Card>
           )}
 
-          {/* Resume upload links */}
-          <Card className="border-zinc-200">
-            <CardHeader>
-              <CardTitle className="text-base">Apply & upload resume</CardTitle>
-              <CardDescription>
-                Submit your resume through these recruitment sites
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResumeUploadLinks
-                title={listing.title}
-                company={listing.company}
-                applyLink={listing.link}
-              />
-            </CardContent>
-          </Card>
-
           {/* Student tip */}
           <div className="rounded-lg border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-600">
             <p className="font-medium text-zinc-700">Tip for students</p>
@@ -394,7 +377,7 @@ export default function InternshipDetailPage() {
           </div>
         </div>
 
-        {/* Sidebar — apply, save, complete */}
+        {/* Sidebar — apply, save, complete, upload resume */}
         <aside className="space-y-6">
           <Card className="sticky top-4 border-zinc-200">
             <CardHeader>
@@ -422,6 +405,23 @@ export default function InternshipDetailPage() {
                 {isCompleted ? "Completed" : "Mark as completed"}
               </Button>
               {message && <p className="text-sm text-zinc-600" role="status">{message}</p>}
+            </CardContent>
+          </Card>
+
+          <Card className="sticky top-4 border-zinc-200">
+            <CardHeader>
+              <CardTitle className="text-base">Upload your resume</CardTitle>
+              <CardDescription>
+                Find this role on recruitment sites to submit your resume.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResumeUploadLinks
+                title={listing.title}
+                company={listing.company}
+                applyLink={listing.link}
+                compact
+              />
             </CardContent>
           </Card>
         </aside>
