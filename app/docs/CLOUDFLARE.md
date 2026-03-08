@@ -25,7 +25,7 @@ For local Cloudflare preview, copy `.dev.vars.example` to `.dev.vars` and set `N
 
 ## Deploy this frontend to Cloudflare
 
-**Build command:** Use `yarn build` (or `npm run build`). This runs `opennextjs-cloudflare build` and creates `.open-next/worker.js`, which wrangler needs. Do not use plain `next build` for Cloudflare deployment.
+**Build command:** In Cloudflare Pages, set the build command to **`yarn build:cloudflare`** (or `npm run build:cloudflare`). That runs the OpenNext adapter, which internally runs `yarn build` (Next.js) then produces `.open-next/worker.js`. Do **not** use `yarn build` as the Cloudflare build command—that would only run Next.js and skip the OpenNext step; OpenNext itself must be the entry point so it can invoke `next build` once.
 
 1. Install deps: `yarn` (or `npm install`).
 2. Log in: `npx wrangler login`.
