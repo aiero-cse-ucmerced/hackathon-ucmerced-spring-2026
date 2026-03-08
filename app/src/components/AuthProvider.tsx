@@ -12,6 +12,7 @@ type AuthUser = {
   name: string;
   email: string;
   major?: string;
+  avatarUrl?: string | null;
 } | null;
 
 const TOKEN_KEY = "uncookedaura_token";
