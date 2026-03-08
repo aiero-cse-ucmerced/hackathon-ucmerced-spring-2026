@@ -103,8 +103,9 @@ export default function DashboardPage() {
               </h1>
             </div>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-600">
-              Explore internships that line up with your interests and use them
-              to unlock stronger entry-level roles.
+              AI-powered matching surfaces internships that line up with your
+              interests and strengths. Complete them to unlock stronger entry-level
+              roles.
             </p>
           </Card>
         </AspectRatio>

@@ -3,6 +3,7 @@ import { ViewTransitionLink } from "@/components/ViewTransitionLink";
 
 const PRODUCT_LINKS = [
   { label: "Features", href: "/learn#features" },
+  { label: "AI Personalization", href: "/learn#ai-personalization" },
   { label: "Roadmap", href: "/roadmap" },
 ];
 

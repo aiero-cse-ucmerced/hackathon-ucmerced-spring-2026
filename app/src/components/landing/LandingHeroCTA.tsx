@@ -18,9 +18,9 @@ export function LandingHeroCTA() {
     return (
       <Link
         href="/dashboard"
-        className="inline-flex h-14 min-w-[180px] items-center justify-center gap-2 rounded-xl bg-[#171717] px-8 text-base font-semibold text-white shadow-lg shadow-zinc-900/20 transition-all hover:bg-[#2a2a2a] hover:shadow-xl hover:shadow-zinc-900/25 focus-visible:ring-2 focus-visible:ring-[#171717] focus-visible:ring-offset-2"
+        className="inline-flex h-14 min-w-[180px] items-center justify-center gap-2 rounded-xl bg-[#171717] px-8 text-base font-semibold text-white shadow-lg shadow-zinc-900/20 transition-all hover:scale-[1.02] hover:bg-[#2a2a2a] hover:shadow-xl hover:shadow-zinc-900/25 focus-visible:ring-2 focus-visible:ring-[#171717] focus-visible:ring-offset-2"
       >
-        Dashboard →
+        Go to dashboard
       </Link>
     );
   }
@@ -28,9 +28,9 @@ export function LandingHeroCTA() {
   return (
     <Link
       href="/signup"
-      className="inline-flex h-14 min-w-[180px] items-center justify-center gap-2 rounded-xl bg-[#171717] px-8 text-base font-semibold text-white shadow-lg shadow-zinc-900/20 transition-all hover:bg-[#2a2a2a] hover:shadow-xl hover:shadow-zinc-900/25 focus-visible:ring-2 focus-visible:ring-[#171717] focus-visible:ring-offset-2"
+      className="inline-flex h-14 min-w-[180px] items-center justify-center gap-2 rounded-xl bg-[#171717] px-8 text-base font-semibold text-white shadow-lg shadow-zinc-900/20 transition-all hover:scale-[1.02] hover:bg-[#2a2a2a] hover:shadow-xl hover:shadow-zinc-900/25 focus-visible:ring-2 focus-visible:ring-[#171717] focus-visible:ring-offset-2"
     >
-      Get Started →
+      Get started free
     </Link>
   );
 }

@@ -14,9 +14,9 @@ export default function LearnMorePage() {
           </h2>
           <p className="mt-4 text-base leading-relaxed text-zinc-600 md:text-lg">
             UncookedAura matches you to internships and entry-level roles using
-            your interests and strengths—not just past job titles. See a fit
-            score for every listing, filter by minimum match, and save roles for
-            later.
+            AI-powered personalization—your interests, strengths, and profile,
+            not just past job titles. See a fit score for every listing, filter
+            by minimum match, and save roles for later.
           </p>
         </section>
 
@@ -62,6 +62,41 @@ export default function LearnMorePage() {
               </p>
             </li>
           </ul>
+        </section>
+
+        {/* AI Personalization */}
+        <section id="ai-personalization" className="border-b border-zinc-100 py-12 scroll-mt-24">
+          <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 md:text-3xl">
+            AI personalization
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-zinc-600 md:text-lg">
+            AI personalization uses your behavior, profile, and preferences to
+            tailor every interaction—so you see roles that fit you, not a
+            one-size-fits-all feed. Instead of static filters, we build a
+            unified view of your interests, strengths, and goals to surface
+            opportunities that match your context.
+          </p>
+          <p className="mt-4 text-base leading-relaxed text-zinc-600">
+            At UncookedAura, that means your major, interests, and strengths
+            drive fit scores and ranking. As you save, complete, and search, the
+            system learns what matters to you. We keep you in control: you choose
+            what goes in your profile and can adjust your minimum match threshold
+            anytime.
+          </p>
+          <p className="mt-4 text-base leading-relaxed text-zinc-600">
+            To dive deeper into how AI personalization is transforming user
+            experiences across industries—from dynamic interfaces to
+            personalized content delivery—see{" "}
+            <a
+              href="https://www.joinvalley.co/blog/ai-personalization-transforming-user-experience"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-700"
+            >
+              How AI Personalization is Transforming the User Experience
+            </a>{" "}
+            on Valley.
+          </p>
         </section>
 
         {/* Features */}

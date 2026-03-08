@@ -72,7 +72,10 @@ export function AllToolsSection() {
         <span className="absolute bottom-[28%] left-[18%] block h-1 w-1 rounded-full bg-amber-500/40" aria-hidden />
 
         <div className="relative mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-zinc-900 md:text-4xl">
+          <h2
+            className="text-3xl font-bold tracking-tight text-zinc-900 md:text-4xl"
+            style={{ fontFamily: "var(--font-syne), var(--font-poppins), sans-serif" }}
+          >
             All the tools{" "}
             <span className="relative inline-block">
               <span className="relative z-10">that</span>
@@ -107,7 +110,7 @@ export function AllToolsSection() {
                 className="relative aspect-video w-full overflow-hidden"
                 aria-label="Feature overview"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-violet-200 via-blue-100 to-zinc-100" />
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-100/80 via-amber-50/60 to-zinc-100" />
                 <Carousel
                   opts={{ loop: true }}
                   className="absolute inset-0 flex items-center justify-center"

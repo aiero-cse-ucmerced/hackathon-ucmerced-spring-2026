@@ -16,7 +16,12 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: "How does job matching work?",
     answer:
-      "We look at your skills, interests, and goals so you see roles that fit you, even if the title doesn’t exactly match your resume.",
+      "We use AI personalization to match you to roles based on your skills, interests, and goals—so you see fits that make sense for you, even if the title doesn’t exactly match your resume.",
+  },
+  {
+    question: "What is AI personalization?",
+    answer:
+      "AI personalization tailors your experience using your profile, behavior, and preferences. At UncookedAura, that means fit scores and rankings reflect your interests and strengths. Learn more in our Learn section.",
   },
   {
     question: "Is UncookedAura free to use?",
