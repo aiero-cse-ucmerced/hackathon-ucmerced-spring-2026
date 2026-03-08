@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
+import { ViewTransitionLink } from "@/components/ViewTransitionLink";
 import { Logo } from "@/components/Logo";
 import { md5 } from "@/lib/md5";
 import { Avatar, DEFAULT_AVATAR_IMAGE } from "@/components/ui/avatar";
@@ -30,7 +30,7 @@ export function LandingHeader() {
         <Logo />
         <nav className="flex items-center gap-4">
           {!isLoading && isLoggedIn && (
-            <Link
+            <ViewTransitionLink
               href="/settings"
               className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
               aria-label="Account settings"
@@ -45,7 +45,7 @@ export function LandingHeader() {
                   <Avatar.UserIcon />
                 </Avatar.Fallback>
               </Avatar>
-            </Link>
+            </ViewTransitionLink>
           )}
         </nav>
       </div>

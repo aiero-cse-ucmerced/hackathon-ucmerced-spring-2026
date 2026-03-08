@@ -92,8 +92,9 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-10">
-      <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <AspectRatio ratio={4 / 1}>
+      <div style={{ viewTransitionName: "vt-section-1" }}>
+        <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <AspectRatio ratio={4 / 1}>
           <Card className="flex h-full flex-col justify-center border-0 p-5">
             <div className="flex items-center gap-3">
               <Avatar size="lg" className="shrink-0 ring-1 ring-zinc-200">
@@ -136,7 +137,8 @@ export default function DashboardPage() {
             </div>
           </Card>
         </AspectRatio>
-      </section>
+        </section>
+      </div>
 
       {showProfileBanner && (
         <section className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -159,8 +161,9 @@ export default function DashboardPage() {
         </section>
       )}
 
-      <AspectRatio ratio={4 / 3}>
-        <Card className="flex h-full w-full flex-col overflow-hidden border-0 p-0">
+      <div style={{ viewTransitionName: "vt-section-2" }}>
+        <AspectRatio ratio={4 / 3}>
+          <Card className="flex h-full w-full flex-col overflow-hidden border-0 p-0">
           <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 p-4">
             <div>
               <h2 className="text-lg font-semibold text-zinc-900">
@@ -224,12 +227,14 @@ export default function DashboardPage() {
             )}
           </div>
         </Card>
-      </AspectRatio>
+        </AspectRatio>
+      </div>
 
-      <section className="grid gap-6 md:grid-cols-2">
-        <article className="rounded-xl bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-zinc-900">Saved</h2>
-          <p className="mt-1 text-sm text-zinc-600">
+      <div style={{ viewTransitionName: "vt-section-3" }}>
+        <section className="grid gap-6 md:grid-cols-2">
+          <article className="rounded-xl bg-white p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-zinc-900">Saved</h2>
+            <p className="mt-1 text-sm text-zinc-600">
             Quickly revisit internships you&apos;ve starred.
           </p>
           <p className="mt-3 text-sm text-zinc-800">
@@ -286,16 +291,18 @@ export default function DashboardPage() {
             </p>
           )}
         </article>
-      </section>
+        </section>
+      </div>
 
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-900">Connections</h2>
-          <p className="mt-1 text-sm text-zinc-600">
-            People and resources to help you grow. Swipe or use the arrows to
-            browse.
-          </p>
-        </div>
+      <div style={{ viewTransitionName: "vt-section-4" }}>
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-900">Connections</h2>
+            <p className="mt-1 text-sm text-zinc-600">
+              People and resources to help you grow. Swipe or use the arrows to
+              browse.
+            </p>
+          </div>
         <Carousel
           opts={{ align: "start", loop: false }}
           className="w-full pl-12 pr-12"
@@ -361,7 +368,8 @@ export default function DashboardPage() {
           <CarouselPrevious className="left-0 top-1/2 -translate-y-1/2" />
           <CarouselNext className="right-0 top-1/2 -translate-y-1/2" />
         </Carousel>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

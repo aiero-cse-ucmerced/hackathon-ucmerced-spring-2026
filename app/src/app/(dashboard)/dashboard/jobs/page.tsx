@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { JobSearchBar } from "@/components/JobSearchBar";
 import { MatchedInternshipCard } from "@/components/MatchedInternshipCard";
 import { InternshipCardSkeleton } from "@/components/skeleton/InternshipCardSkeleton";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/AuthProvider";
+import { useProfile } from "@/lib/use-profile";
 import { fetchInternships } from "@/lib/internships-api";
 import type { MatchedListing } from "@/lib/internships-api";
 import { setJobsSearchCache } from "@/lib/jobs-search-cache";
@@ -13,11 +15,15 @@ const DEFAULT_LOCATION = "Merced, CA";
 
 export default function JobsPage() {
   const { user } = useAuth();
+  const { profile, save } = useProfile();
   const [keywords, setKeywords] = useState("");
   const [location, setLocation] = useState(DEFAULT_LOCATION);
   const [items, setItems] = useState<MatchedListing[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const expandedRef = useRef<HTMLDivElement>(null);
 
   const runSearch = useCallback(async () => {
     setLoading(true);
@@ -47,12 +53,44 @@ export default function JobsPage() {
     }
   }, [keywords, location]);
 
+  const savedIds = profile?.savedIds ?? [];
+  const completedIds = profile?.completedIds ?? [];
+
+  function toggleSaved(id: string) {
+    if (!profile) return;
+    const isSaved = savedIds.includes(id);
+    const nextSaved = isSaved
+      ? savedIds.filter((value) => value !== id)
+      : [...savedIds, id];
+    save({ ...profile, savedIds: nextSaved });
+    setMessage(isSaved ? "Removed from saved." : "Saved for later.");
+  }
+
+  function markCompleted(id: string) {
+    if (!profile) return;
+    if (completedIds.includes(id)) {
+      setMessage("Already marked as completed.");
+      return;
+    }
+    const nextCompleted = [...completedIds, id];
+    save({ ...profile, completedIds: nextCompleted });
+    setMessage(
+      "Marked as completed. Entry-level roles may unlock as you finish more internships.",
+    );
+  }
+
+  useEffect(() => {
+    if (expandedId && expandedRef.current) {
+      expandedRef.current.focus({ preventScroll: true });
+    }
+  }, [expandedId]);
+
   if (!user) {
     return null;
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" style={{ viewTransitionName: "vt-content" }}>
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 md:text-3xl">
           Jobs
@@ -87,12 +125,73 @@ export default function JobsPage() {
         </div>
       ) : items.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {items.map((item, index) => (
-            <MatchedInternshipCard
-              key={`${item.id}-${item.source ?? "job"}-${index}`}
-              item={item}
-            />
-          ))}
+          {items.map((item, index) => {
+            const isExpanded = expandedId === item.id;
+            const isSaved = savedIds.includes(item.id);
+            const isCompleted = completedIds.includes(item.id);
+            return (
+              <div
+                key={`${item.id}-${item.source ?? "job"}-${index}`}
+                className={`transition-all duration-200 ease-out ${
+                  isExpanded ? "z-10 col-span-full scale-[1.02] md:scale-100" : ""
+                }`}
+                onClick={() => {
+                  setMessage(null);
+                  setExpandedId(isExpanded ? null : item.id);
+                }}
+                role="button"
+                tabIndex={isExpanded ? 0 : -1}
+                ref={isExpanded ? expandedRef : undefined}
+                aria-expanded={isExpanded}
+              >
+                <div
+                  className={
+                    isExpanded
+                      ? "rounded-xl border-2 border-zinc-300 bg-white p-6 shadow-md"
+                      : ""
+                  }
+                >
+                  <MatchedInternshipCard
+                    item={item}
+                    disableTitleLink
+                  />
+                  {isExpanded && (
+                    <div
+                      className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <h2 className="text-sm font-semibold text-zinc-900">
+                        Actions
+                      </h2>
+                      <div className="mt-3 flex flex-col gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => toggleSaved(item.id)}
+                        >
+                          {isSaved ? "Unsave" : "Save for later"}
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => markCompleted(item.id)}
+                        >
+                          {isCompleted ? "Completed" : "Mark as completed"}
+                        </Button>
+                      </div>
+                      {message && (
+                        <p className="mt-3 text-xs text-zinc-600" role="status">
+                          {message}
+                        </p>
+                      )}
+                      <p className="mt-2 text-xs text-zinc-500">
+                        Click the card again to collapse.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : null}
     </div>
