@@ -1,6 +1,7 @@
 import { ViewTransitionLink } from "@/components/ViewTransitionLink";
 import { Badge } from "@/components/ui/badge";
 import type { MatchedListing } from "@/lib/internships-api";
+import { buildInternshipSlug } from "@/lib/internship-slug";
 
 function extractCardKeywords(item: MatchedListing): string[] {
   const seen = new Set<string>();
@@ -30,7 +31,7 @@ export function MatchedInternshipCard({
   disableTitleLink?: boolean;
 }) {
   const keywords = extractCardKeywords(item);
-  const detailHref = `/dashboard/internships/${encodeURIComponent(item.id)}`;
+  const detailHref = `/dashboard/internships/${buildInternshipSlug(item)}`;
 
   const content = (
     <article className="group flex flex-col justify-between rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md">

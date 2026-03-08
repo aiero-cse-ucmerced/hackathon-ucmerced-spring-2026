@@ -4,10 +4,45 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { MatchedInternshipCard } from "@/components/MatchedInternshipCard";
 import { InternshipCardSkeleton } from "@/components/skeleton/InternshipCardSkeleton";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/AuthProvider";
 import { useProfile } from "@/lib/use-profile";
 import { useInternships } from "@/lib/use-internships";
+import type { MatchedListing } from "@/lib/internships-api";
+import { formatRelativeTime } from "@/lib/format-relative-time";
+
+function SavedInternshipCard({
+  item,
+  onUnsave,
+}: {
+  item: MatchedListing;
+  onUnsave: () => void;
+}) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest("a")) return;
+        onUnsave();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onUnsave();
+        }
+      }}
+      className="cursor-pointer rounded-xl transition-all hover:ring-2 hover:ring-amber-500/50 focus:outline-none focus:ring-2 focus:ring-amber-500"
+      aria-label={`Unsave ${item.title}`}
+    >
+      <MatchedInternshipCard item={item} />
+      {item.updated && (
+        <p className="mt-2 text-xs text-zinc-500">
+          {formatRelativeTime(item.updated)}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export default function SavedPage() {
   const { user } = useAuth();
@@ -50,10 +85,15 @@ export default function SavedPage() {
     [internships, entryLevel],
   );
 
-  const savedListings = useMemo(
-    () => allItems.filter((item) => savedIds.includes(item.id)),
-    [allItems, savedIds],
-  );
+  const savedListings = useMemo(() => {
+    const seen = new Set<string>();
+    return allItems.filter((item) => {
+      if (!savedIds.includes(item.id)) return false;
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  }, [allItems, savedIds]);
 
   const loading = loadingInternships || loadingEntry;
 
@@ -105,22 +145,12 @@ export default function SavedPage() {
         </p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {savedListings.map((item, index) => (
-            <div
-              key={`${item.id}-${item.source ?? "saved"}-${index}`}
-              className="flex flex-col gap-2"
-            >
-              <MatchedInternshipCard item={item} />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => remove(item.id)}
-                aria-label={`Unsave ${item.title}`}
-              >
-                Unsave
-              </Button>
-            </div>
+          {savedListings.map((item) => (
+            <SavedInternshipCard
+              key={item.id}
+              item={item}
+              onUnsave={() => remove(item.id)}
+            />
           ))}
         </div>
       )}

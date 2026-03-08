@@ -18,6 +18,10 @@ import { useProfile } from "@/lib/use-profile";
 import { useInternships } from "@/lib/use-internships";
 import { getJobsSearchListing } from "@/lib/jobs-search-cache";
 import type { MatchedListing } from "@/lib/internships-api";
+import { parseInternshipSlug } from "@/lib/internship-slug";
+import { LocationMap } from "@/components/LocationMap";
+import { ResumeUploadLinks } from "@/components/ResumeUploadLinks";
+import { formatRelativeTime } from "@/lib/format-relative-time";
 
 /** Extract keyword-style terms from listing for badge display. */
 function extractKeywords(listing: MatchedListing): string[] {
@@ -119,7 +123,8 @@ function getMatchingInterests(
 
 export default function InternshipDetailPage() {
   const params = useParams<{ id: string }>();
-  const id = params.id ? decodeURIComponent(params.id) : "";
+  const slugOrId = params.id ? decodeURIComponent(params.id) : "";
+  const id = slugOrId ? parseInternshipSlug(slugOrId) : "";
 
   const { user } = useAuth();
   const { profile, save } = useProfile();
@@ -239,6 +244,9 @@ export default function InternshipDetailPage() {
           )}
           {listing.type && <span>{listing.type}</span>}
           {listing.salary && <span>{listing.salary}</span>}
+          {listing.updated && (
+            <span>{formatRelativeTime(listing.updated)}</span>
+          )}
         </div>
       </header>
 
@@ -321,11 +329,11 @@ export default function InternshipDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {requirements.length > 0 && (
-                  <ul className="list-inside list-disc space-y-1.5 text-sm text-zinc-700">
+                  <div className="space-y-3 text-sm leading-relaxed text-zinc-700">
                     {requirements.map((r, i) => (
-                      <li key={i}>{r}</li>
+                      <p key={i}>{r}</p>
                     ))}
-                  </ul>
+                  </div>
                 )}
                 {keywords.length > 0 && (
                   <div>
@@ -344,6 +352,38 @@ export default function InternshipDetailPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Location map */}
+          {listing.location && (
+            <Card className="border-zinc-200">
+              <CardHeader>
+                <CardTitle className="text-base">Location</CardTitle>
+                <CardDescription>
+                  Where this role is based
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <LocationMap location={listing.location} />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Resume upload links */}
+          <Card className="border-zinc-200">
+            <CardHeader>
+              <CardTitle className="text-base">Apply & upload resume</CardTitle>
+              <CardDescription>
+                Submit your resume through these recruitment sites
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResumeUploadLinks
+                title={listing.title}
+                company={listing.company}
+                applyLink={listing.link}
+              />
+            </CardContent>
+          </Card>
 
           {/* Student tip */}
           <div className="rounded-lg border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-600">
