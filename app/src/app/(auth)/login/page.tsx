@@ -16,6 +16,8 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/AuthProvider";
 import { useOnlineStatus } from "@/lib/use-online-status";
 
+const MIN_PASSWORD_LENGTH = 8;
+
 export default function LoginPage() {
   const router = useRouter();
   const { signIn } = useAuth();
@@ -25,25 +27,35 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
   const disabled = submitting || !online;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError(null);
+    setFieldErrors({});
+
     if (!online) {
       setError("Connect to the internet to login.");
       return;
     }
 
+    const errors: { email?: string; password?: string } = {};
+    if (!email.trim()) errors.email = "Email is required.";
+    if (!password) {
+      errors.password = "Password is required.";
+    } else if (password.length < MIN_PASSWORD_LENGTH) {
+      errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
     setSubmitting(true);
-    setError(null);
-
     try {
-      if (!email || !password) {
-        setError("Enter both email and password.");
-        return;
-      }
-
       signIn({ name: email.split("@")[0] ?? "Student", email });
       router.replace("/dashboard");
     } finally {
@@ -81,10 +93,18 @@ export default function LoginPage() {
               autoComplete="email"
               placeholder="m@example.com"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: undefined }));
+              }}
+              invalid={!!fieldErrors.email}
+              aria-invalid={!!fieldErrors.email}
               required
               className="h-11 text-base"
             />
+            {fieldErrors.email && (
+              <p className="text-sm text-red-600" role="alert">{fieldErrors.email}</p>
+            )}
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -103,11 +123,20 @@ export default function LoginPage() {
               id="password"
               type="password"
               autoComplete="current-password"
+              placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: undefined }));
+              }}
+              invalid={!!fieldErrors.password}
+              aria-invalid={!!fieldErrors.password}
               required
               className="h-11 text-base"
             />
+            {fieldErrors.password && (
+              <p className="text-sm text-red-600" role="alert">{fieldErrors.password}</p>
+            )}
           </div>
           {error && (
             <p className="text-sm text-red-600" role="status">

@@ -35,25 +35,60 @@ const FAQ_ITEMS: FaqItem[] = [
   },
 ];
 
+function ChevronDown({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
+function ChevronUp({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="m18 15-6-6-6 6" />
+    </svg>
+  );
+}
+
 export function FaqAccordion() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <div className="space-y-3">
+    <div className="divide-y divide-zinc-200">
       {FAQ_ITEMS.map((item, index) => {
         const isOpen = openIndex === index;
         const panelId = `faq-panel-${index}`;
         const buttonId = `faq-button-${index}`;
 
         return (
-          <div
-            key={item.question}
-            className="rounded-lg border border-zinc-200 bg-white shadow-sm"
-          >
+          <div key={item.question}>
             <button
               id={buttonId}
               type="button"
-              className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left"
+              className="flex w-full items-center justify-between gap-4 py-4 text-left"
               aria-expanded={isOpen}
               aria-controls={panelId}
               onClick={() =>
@@ -62,25 +97,28 @@ export function FaqAccordion() {
                 )
               }
             >
-              <span className="text-sm font-medium text-zinc-900 md:text-base">
+              <span className="text-sm font-semibold text-zinc-900 md:text-base">
                 {item.question}
               </span>
-              <span
-                aria-hidden
-                className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-300 text-xs text-zinc-600"
-              >
-                {isOpen ? "−" : "+"}
+              <span className="shrink-0 text-zinc-500">
+                {isOpen ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
               </span>
             </button>
             <div
               id={panelId}
               role="region"
               aria-labelledby={buttonId}
-              className={`px-4 pb-3 text-sm leading-relaxed text-zinc-600 md:text-base ${
+              className={`overflow-hidden text-sm leading-relaxed text-zinc-500 md:text-base ${
                 isOpen ? "block" : "hidden"
               }`}
             >
-              {item.answer}
+              <p className="pb-4 pl-0 pr-8">
+                {item.answer}
+              </p>
             </div>
           </div>
         );

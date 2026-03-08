@@ -2,8 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/Button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+const MIN_PASSWORD_LENGTH = 8;
 
 const MOCK_EMAIL = "user@example.com"; // Replace with auth context when available
 
@@ -62,20 +67,29 @@ function SettingsRow({
   label,
   description,
   action,
+  stackAction,
 }: {
   label: string;
   description?: string;
   action: React.ReactNode;
+  /** When true, action is rendered on its own row below label/description for cleaner alignment (e.g. multi-field forms). */
+  stackAction?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
+    <div
+      className={
+        stackAction
+          ? "flex flex-col gap-4"
+          : "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      }
+    >
+      <div className={stackAction ? "min-w-0" : undefined}>
         <p className="font-medium text-zinc-900">{label}</p>
         {description && (
           <p className="mt-0.5 text-sm text-zinc-500">{description}</p>
         )}
       </div>
-      <div className="shrink-0">{action}</div>
+      <div className={stackAction ? "w-full min-w-0" : "shrink-0"}>{action}</div>
     </div>
   );
 }
@@ -85,6 +99,14 @@ export function SettingsContent() {
   const [emailFormOpen, setEmailFormOpen] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [passwordFormOpen, setPasswordFormOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordErrors, setPasswordErrors] = useState<{
+    current?: string;
+    new?: string;
+    confirm?: string;
+  }>({});
   const [passkeys, setPasskeys] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState("");
@@ -102,9 +124,36 @@ export function SettingsContent() {
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordErrors({});
+    const errors: { current?: string; new?: string; confirm?: string } = {};
+    if (!currentPassword.trim()) {
+      errors.current = "Enter your current password.";
+    }
+    if (!newPassword) {
+      errors.new = "Enter a new password.";
+    } else if (newPassword.length < MIN_PASSWORD_LENGTH) {
+      errors.new = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+    }
+    if (newPassword !== confirmPassword) {
+      errors.confirm = "Passwords do not match.";
+    }
+    if (Object.keys(errors).length > 0) {
+      setPasswordErrors(errors);
+      return;
+    }
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
     setPasswordFormOpen(false);
-    setStatus({ type: "success", msg: "Password updated." });
-    setTimeout(() => setStatus(null), 3000);
+    toast.success("Password updated.");
+  };
+
+  const handlePasswordCancel = () => {
+    setPasswordFormOpen(false);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordErrors({});
   };
 
   const handleSignOut = () => {
@@ -218,28 +267,86 @@ export function SettingsContent() {
             <SettingsRow
               label="Password"
               description="Update your password to keep your account secure."
+              stackAction={passwordFormOpen}
               action={
                 passwordFormOpen ? (
-                  <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <input
-                      type="password"
-                      placeholder="New password"
-                      className="rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-                    />
-                    <input
-                      type="password"
-                      placeholder="Confirm password"
-                      className="rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-                    />
+                  <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-4">
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="current-password" className="text-sm font-medium text-zinc-900">
+                          Current password
+                        </Label>
+                        <Input
+                          id="current-password"
+                          type="password"
+                          autoComplete="current-password"
+                          placeholder="Current password"
+                          value={currentPassword}
+                          onChange={(e) => {
+                            setCurrentPassword(e.target.value);
+                            if (passwordErrors.current) setPasswordErrors((p) => ({ ...p, current: undefined }));
+                          }}
+                          invalid={!!passwordErrors.current}
+                          className="min-w-0"
+                        />
+                        {passwordErrors.current && (
+                          <p className="text-sm text-red-600" role="alert">
+                            {passwordErrors.current}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-password" className="text-sm font-medium text-zinc-900">
+                          New password
+                        </Label>
+                        <Input
+                          id="new-password"
+                          type="password"
+                          autoComplete="new-password"
+                          placeholder="At least 8 characters"
+                          value={newPassword}
+                          onChange={(e) => {
+                            setNewPassword(e.target.value);
+                            if (passwordErrors.new) setPasswordErrors((p) => ({ ...p, new: undefined }));
+                          }}
+                          invalid={!!passwordErrors.new}
+                          className="min-w-0"
+                        />
+                        {passwordErrors.new && (
+                          <p className="text-sm text-red-600" role="alert">
+                            {passwordErrors.new}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirm-password-settings" className="text-sm font-medium text-zinc-900">
+                          Confirm new password
+                        </Label>
+                        <Input
+                          id="confirm-password-settings"
+                          type="password"
+                          autoComplete="new-password"
+                          placeholder="Confirm new password"
+                          value={confirmPassword}
+                          onChange={(e) => {
+                            setConfirmPassword(e.target.value);
+                            if (passwordErrors.confirm) setPasswordErrors((p) => ({ ...p, confirm: undefined }));
+                          }}
+                          invalid={!!passwordErrors.confirm}
+                          className="min-w-0"
+                        />
+                        {passwordErrors.confirm && (
+                          <p className="text-sm text-red-600" role="alert">
+                            {passwordErrors.confirm}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                     <div className="flex gap-2">
                       <Button type="submit" variant="primary">
                         Update
                       </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => setPasswordFormOpen(false)}
-                      >
+                      <Button type="button" variant="secondary" onClick={handlePasswordCancel}>
                         Cancel
                       </Button>
                     </div>

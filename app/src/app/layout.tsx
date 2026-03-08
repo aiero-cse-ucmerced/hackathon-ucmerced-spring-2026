@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import { Footer } from "@/components/Footer";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { AuthProvider } from "@/components/AuthProvider";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -29,6 +30,7 @@ export default function RootLayout({
           <main className="flex min-h-0 flex-1 flex-col">{children}</main>
           <ServiceWorkerRegistrar />
           <Footer />
+          <Toaster />
         </AuthProvider>
       </body>
     </html>
