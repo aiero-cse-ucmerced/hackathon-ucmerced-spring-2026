@@ -10,6 +10,7 @@ export interface UserProfile {
   email?: string;
   major?: string;
   avatarUrl?: string | null;
+  age?: number;
   interests: string[];
   strengths: string[];
   pastExperiences: string[];
@@ -143,6 +144,7 @@ export async function patchProfile(
       | "name"
       | "email"
       | "major"
+      | "age"
       | "interests"
       | "strengths"
       | "pastExperiences"
@@ -169,6 +171,7 @@ export async function patchProfile(
       name: payload.name ?? existing?.name,
       email: payload.email ?? existing?.email,
       major: payload.major ?? existing?.major,
+      age: payload.age ?? existing?.age,
       interests: payload.interests ?? existing?.interests ?? [],
       strengths: payload.strengths ?? existing?.strengths ?? [],
       pastExperiences: payload.pastExperiences ?? existing?.pastExperiences ?? [],

@@ -1,45 +1,79 @@
-const BRAND_ROW_1 = [
-  "Pinterest",
-  "VAYNERMEDIA",
-  "Disney",
-  "facebook",
-  "VISA",
-  "Booking.com",
+"use client";
+
+import Image from "next/image";
+
+/** Brand slug -> Clearbit domain for transparent logo. Grey applied via CSS. */
+const BRAND_ROW_1: { name: string; domain: string }[] = [
+  { name: "Pinterest", domain: "pinterest.com" },
+  { name: "VAYNERMEDIA", domain: "vaynermedia.com" },
+  { name: "Disney", domain: "disney.com" },
+  { name: "facebook", domain: "facebook.com" },
+  { name: "VISA", domain: "visa.com" },
+  { name: "Booking.com", domain: "booking.com" },
 ];
-const BRAND_ROW_2 = [
-  "Google",
-  "Meta",
-  "BBC",
-  "Spotify",
-  "PELOTON",
-  "xero",
-  "NI",
+const BRAND_ROW_2: { name: string; domain: string }[] = [
+  { name: "Google", domain: "google.com" },
+  { name: "Meta", domain: "meta.com" },
+  { name: "BBC", domain: "bbc.com" },
+  { name: "Spotify", domain: "spotify.com" },
+  { name: "PELOTON", domain: "onepeloton.com" },
+  { name: "xero", domain: "xero.com" },
+  { name: "NI", domain: "ni.com" },
 ];
+
+const logoBase = "https://logo.clearbit.com";
+
+function BrandLogo({
+  name,
+  domain,
+}: {
+  name: string;
+  domain: string;
+}) {
+  const src = `${logoBase}/${domain}`;
+  return (
+    <span
+      className="relative flex h-8 w-12 shrink-0 items-center justify-center text-zinc-500 [filter:grayscale(100%);opacity:0.7] hover:opacity-90"
+      title={name}
+    >
+      <Image
+        src={src}
+        alt=""
+        width={96}
+        height={48}
+        className="object-contain object-center"
+        unoptimized
+        onError={(e) => {
+          const target = e.currentTarget;
+          target.style.display = "none";
+          const fallback = target.nextElementSibling as HTMLElement | null;
+          if (fallback) fallback.style.display = "flex";
+        }}
+      />
+      <span
+        className="absolute inset-0 hidden items-center justify-center text-xs font-semibold uppercase tracking-wider"
+        aria-hidden
+      >
+        {name}
+      </span>
+    </span>
+  );
+}
 
 export function AllToolsSection() {
   return (
     <>
-      {/* Brand names - static, two rows */}
+      {/* Brand logos - transparent, grey via CSS */}
       <section className="border-t border-zinc-100 bg-white py-12">
         <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-8 px-6">
-          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
-            {BRAND_ROW_1.map((name) => (
-              <span
-                key={name}
-                className="text-sm font-semibold uppercase tracking-wider text-zinc-500"
-              >
-                {name}
-              </span>
+          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
+            {BRAND_ROW_1.map(({ name, domain }) => (
+              <BrandLogo key={domain} name={name} domain={domain} />
             ))}
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
-            {BRAND_ROW_2.map((name) => (
-              <span
-                key={name}
-                className="text-sm font-semibold uppercase tracking-wider text-zinc-500"
-              >
-                {name}
-              </span>
+          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
+            {BRAND_ROW_2.map(({ name, domain }) => (
+              <BrandLogo key={domain} name={name} domain={domain} />
             ))}
           </div>
         </div>

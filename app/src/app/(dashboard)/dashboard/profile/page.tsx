@@ -52,6 +52,7 @@ export default function ProfilePage() {
         name: p.name,
         email: p.email,
         major: p.major,
+        age: p.age,
         interests: p.interests ?? [],
         strengths: p.strengths ?? [],
         pastExperiences: p.pastExperiences ?? [],
@@ -65,6 +66,7 @@ export default function ProfilePage() {
         name: user.name,
         email: user.email,
         major: user.major,
+        age: undefined,
         interests: [],
         strengths: [],
         pastExperiences: [],
@@ -130,6 +132,7 @@ export default function ProfilePage() {
           name: draft.name,
           email: draft.email,
           major: draft.majors.length > 0 ? draft.majors.join(", ") : undefined,
+          age: draft.age,
           interests: draft.interests,
           strengths: draft.strengths,
           pastExperiences: draft.pastExperiences,
@@ -173,6 +176,21 @@ export default function ProfilePage() {
                   setDraft((c) => ({ ...c, name: e.target.value }))
                 }
                 required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="age">Age (optional)</Label>
+              <Input
+                id="age"
+                type="number"
+                min={13}
+                max={120}
+                value={draft.age ?? ""}
+                onChange={(e) => {
+                  const v = e.target.value ? parseInt(e.target.value, 10) : undefined;
+                  setDraft((c) => ({ ...c, age: v }));
+                }}
+                placeholder="For event recommendations"
               />
             </div>
             <div className="space-y-2 md:col-span-2">
