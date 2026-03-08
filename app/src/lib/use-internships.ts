@@ -9,6 +9,7 @@ export function useInternships(options: {
   kind: InternshipKind;
   interests: string[];
   major?: string;
+  strengths?: string[];
   minScore: number;
 }) {
   const { online } = useOnlineStatus();
@@ -16,6 +17,7 @@ export function useInternships(options: {
   const [loading, setLoading] = useState(true);
 
   const interestsKey = options.interests.slice().sort().join(",");
+  const strengthsKey = (options.strengths ?? []).slice().sort().join(",");
 
   useEffect(() => {
     let cancelled = false;
@@ -32,6 +34,7 @@ export function useInternships(options: {
         interests: options.interests,
         major: options.major,
         minScore: options.minScore,
+        strengths: options.strengths ?? [],
       });
       if (!cancelled) {
         setItems(next);
@@ -43,7 +46,7 @@ export function useInternships(options: {
     return () => {
       cancelled = true;
     };
-  }, [online, options.kind, interestsKey, options.major, options.minScore]);
+  }, [online, options.kind, interestsKey, strengthsKey, options.major, options.minScore]);
 
   return { items, loading, online };
 }

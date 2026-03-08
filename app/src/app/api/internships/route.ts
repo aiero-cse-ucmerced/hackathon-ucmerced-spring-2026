@@ -31,7 +31,12 @@ export interface MatchedListing {
   score: number;
 }
 
-function buildKeywords(kind: InternshipKind, interests: string[], major?: string) {
+function buildKeywords(
+  kind: InternshipKind,
+  interests: string[],
+  major?: string,
+  strengths?: string[],
+) {
   const base: string[] = [];
 
   if (kind === "internship") {
@@ -44,13 +49,18 @@ function buildKeywords(kind: InternshipKind, interests: string[], major?: string
     base.push(major);
   }
 
-  return [...base, ...interests].join(" ");
+  return [...base, ...interests, ...(strengths ?? [])].join(" ");
 }
 
-function computeScore(job: JoobleJob, interests: string[], major?: string) {
+function computeScore(
+  job: JoobleJob,
+  interests: string[],
+  major?: string,
+  strengths?: string[],
+) {
   const haystack = `${job.title} ${job.snippet ?? ""} ${job.type ?? ""}`.toLowerCase();
 
-  if (!haystack.trim() || interests.length === 0) {
+  if (!haystack.trim()) {
     return 60;
   }
 
@@ -62,13 +72,20 @@ function computeScore(job: JoobleJob, interests: string[], major?: string) {
       matches += 1;
     }
   }
+  for (const strength of strengths ?? []) {
+    const token = strength.toLowerCase().trim();
+    if (!token) continue;
+    if (haystack.includes(token)) {
+      matches += 1;
+    }
+  }
 
   if (major && haystack.includes(major.toLowerCase())) {
     matches += 1;
   }
 
   if (matches === 0) return 45;
-  const clamped = Math.min(matches, 5);
+  const clamped = Math.min(matches, 6);
   return 50 + clamped * 10;
 }
 
@@ -76,15 +93,20 @@ async function fetchFromJooble(params: {
   kind: InternshipKind;
   interests: string[];
   major?: string;
+  strengths?: string[];
   location?: string;
   page?: number;
+  /** When set, used as Jooble keywords instead of buildKeywords(). */
+  keywordsOverride?: string;
 }): Promise<JoobleJob[]> {
   const apiKey = process.env.JOOBLE_API_KEY;
   if (!apiKey) {
     return [];
   }
 
-  const keywords = buildKeywords(params.kind, params.interests, params.major);
+  const keywords =
+    params.keywordsOverride?.trim() ||
+    buildKeywords(params.kind, params.interests, params.major, params.strengths);
   const body: Record<string, unknown> = {
     keywords,
   };
@@ -155,8 +177,15 @@ export async function GET(request: Request) {
     .map((value) => value.trim())
     .filter(Boolean);
 
+  const rawStrengths = searchParams.get("strengths") ?? "";
+  const strengths = rawStrengths
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
   const major = searchParams.get("major") ?? undefined;
   const location = searchParams.get("location") ?? undefined;
+  const keywordsOverride = searchParams.get("keywords") ?? undefined;
   const minScore = Number.parseInt(searchParams.get("minScore") ?? "50", 10);
   const pageParam = searchParams.get("page");
   const page = pageParam ? Number.parseInt(pageParam, 10) || undefined : undefined;
@@ -167,8 +196,10 @@ export async function GET(request: Request) {
       kind,
       interests,
       major,
+      strengths,
       location,
       page,
+      keywordsOverride,
     });
   } catch (error) {
     console.warn("[UncookedAura] Jooble fetch failed", error);
@@ -178,9 +209,9 @@ export async function GET(request: Request) {
     jobs = FALLBACK_JOBS;
   }
 
-  const matched: MatchedListing[] = jobs
+  let matched: MatchedListing[] = jobs
     .map((job) => {
-      const score = computeScore(job, interests, major);
+      const score = computeScore(job, interests, major, strengths);
       return {
         id: job.id,
         title: job.title,
@@ -198,6 +229,15 @@ export async function GET(request: Request) {
     })
     .filter((item) => item.score >= minScore)
     .sort((a, b) => b.score - a.score);
+
+  const rawQuery = keywordsOverride?.trim() ?? "";
+  const prefix = rawQuery.toLowerCase().slice(0, 4);
+  if (prefix.length > 0) {
+    matched = matched.filter((item) => {
+      const haystack = `${item.title} ${item.snippet ?? ""} ${item.type ?? ""}`.toLowerCase();
+      return haystack.includes(prefix);
+    });
+  }
 
   return NextResponse.json({
     items: matched,

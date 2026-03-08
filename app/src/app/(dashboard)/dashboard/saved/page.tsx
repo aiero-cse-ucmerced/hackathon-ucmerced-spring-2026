@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { MatchedInternshipCard } from "@/components/MatchedInternshipCard";
 import { InternshipCardSkeleton } from "@/components/skeleton/InternshipCardSkeleton";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/AuthProvider";
 import { useProfile } from "@/lib/use-profile";
 import { useInternships } from "@/lib/use-internships";
@@ -18,6 +19,7 @@ export default function SavedPage() {
 
   const savedIds = profile?.savedIds ?? [];
   const interests = profile?.interests ?? [];
+  const strengths = profile?.strengths ?? [];
   const major = profile?.major;
   const minScore = 1;
 
@@ -29,6 +31,7 @@ export default function SavedPage() {
     interests,
     major,
     minScore,
+    strengths,
   });
 
   const {
@@ -39,6 +42,7 @@ export default function SavedPage() {
     interests,
     major,
     minScore,
+    strengths,
   });
 
   const allItems = useMemo(
@@ -98,17 +102,21 @@ export default function SavedPage() {
         </p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {savedListings.map((item) => (
-            <div key={item.id} className="space-y-2">
+          {savedListings.map((item, index) => (
+            <div
+              key={`${item.id}-${item.source ?? "saved"}-${index}`}
+              className="flex flex-col gap-2"
+            >
               <MatchedInternshipCard item={item} />
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => remove(item.id)}
-                className="text-xs text-zinc-600 underline underline-offset-2 hover:text-zinc-900"
                 aria-label={`Unsave ${item.title}`}
               >
                 Unsave
-              </button>
+              </Button>
             </div>
           ))}
         </div>
