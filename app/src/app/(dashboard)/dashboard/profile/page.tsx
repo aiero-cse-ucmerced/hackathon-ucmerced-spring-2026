@@ -19,6 +19,7 @@ import {
   patchProfile,
   WORKING_FIELD_INTERESTS,
   STRENGTH_OPTIONS,
+  MAJOR_OPTIONS,
   type UserProfile,
 } from "@/lib/internships-api";
 import { getStoredToken } from "@/lib/auth";
@@ -33,10 +34,11 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
-  const [draft, setDraft] = useState<UserProfile>({
+  const [draft, setDraft] = useState<UserProfile & { majors: string[] }>({
     interests: [],
     strengths: [],
     pastExperiences: [],
+    majors: [],
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -45,6 +47,9 @@ export default function ProfilePage() {
     const p = await getProfile(token ?? undefined);
     setProfile(p);
     if (p) {
+      const majors = p.major
+        ? p.major.split(/,\s*/).filter(Boolean)
+        : [];
       setDraft({
         name: p.name,
         email: p.email,
@@ -53,15 +58,21 @@ export default function ProfilePage() {
         interests: p.interests ?? [],
         strengths: p.strengths ?? [],
         pastExperiences: p.pastExperiences ?? [],
+        majors,
       });
     } else if (user) {
+      const majors = user.major
+        ? user.major.split(/,\s*/).filter(Boolean)
+        : [];
       setDraft({
         name: user.name,
         email: user.email,
         major: user.major,
+        age: undefined,
         interests: [],
         strengths: [],
         pastExperiences: [],
+        majors,
       });
     }
   }, [user]);
@@ -207,15 +218,44 @@ export default function ProfilePage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="major">Major</Label>
+              <Label htmlFor="age">Age (optional)</Label>
               <Input
-                id="major"
-                value={draft.major ?? ""}
-                onChange={(e) =>
-                  setDraft((c) => ({ ...c, major: e.target.value }))
-                }
-                placeholder="e.g. CSE, CS, Applied Math"
+                id="age"
+                type="number"
+                min={13}
+                max={120}
+                value={draft.age ?? ""}
+                onChange={(e) => {
+                  const v = e.target.value ? parseInt(e.target.value, 10) : undefined;
+                  setDraft((c) => ({ ...c, age: v }));
+                }}
+                placeholder="For event recommendations"
               />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Major</Label>
+              <p className="text-sm text-zinc-600">
+                Select one or more majors.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {MAJOR_OPTIONS.map((label) => {
+                  const active = draft.majors.includes(label);
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => toggleMajor(label)}
+                      className={`rounded-full border px-3 py-1 text-sm ${
+                        active
+                          ? "border-zinc-900 bg-zinc-900 text-white"
+                          : "border-zinc-300 bg-white text-zinc-800 hover:border-zinc-400"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

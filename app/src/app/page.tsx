@@ -37,16 +37,16 @@ export default function Home() {
       <JobListingsMarquee />
 
       {/* FAQ section */}
-      <section className="border-t border-zinc-100 bg-white py-16">
+      <section className="border-t border-zinc-100 bg-white py-20 md:py-24">
         <div className="mx-auto max-w-3xl px-6">
-          <h2 className="text-center text-2xl font-semibold tracking-tight text-zinc-900 md:text-3xl">
-            Frequently asked questions
+          <h2 className="text-center text-2xl font-bold tracking-tight text-zinc-900 md:text-3xl lg:text-4xl">
+            Not Sure Where To Start?
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-center text-sm leading-relaxed text-zinc-500 md:text-base">
-            Quick answers about how UncookedAura matches you to roles and how to
-            get started.
+            Explore our most commonly asked questions and find the information
+            you need.
           </p>
-          <div className="mt-8">
+          <div className="mt-12">
             <FaqAccordion />
           </div>
         </div>
