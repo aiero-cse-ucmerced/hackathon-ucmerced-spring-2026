@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ViewTransitionLink } from "@/components/ViewTransitionLink";
 
 const PRODUCT_LINKS = [
   { label: "Features", href: "#" },
@@ -18,7 +19,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-4 lg:gap-12">
           {/* Company info */}
           <div>
-            <Link
+            <ViewTransitionLink
               href="/"
               className="flex items-center gap-2"
               aria-label="UncookedAura home"
@@ -30,7 +31,7 @@ export function Footer() {
               <span className="text-xl font-bold tracking-tight text-zinc-900">
                 UncookedAura
               </span>
-            </Link>
+            </ViewTransitionLink>
             <p className="mt-3 text-sm leading-relaxed text-zinc-600">
               Match internships to your profile—no prior experience required.
             </p>
@@ -80,12 +81,12 @@ export function Footer() {
             © 2025 Aeth Private. All rights reserved.
           </span>
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8">
-            <Link
+            <ViewTransitionLink
               href="/privacy-policy"
               className="text-sm text-zinc-500 hover:text-zinc-900"
             >
               Privacy Policy
-            </Link>
+            </ViewTransitionLink>
             <Link
               href="#"
               className="text-sm text-zinc-500 hover:text-zinc-900"

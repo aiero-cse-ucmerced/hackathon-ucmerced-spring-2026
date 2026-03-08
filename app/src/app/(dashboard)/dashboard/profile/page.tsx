@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Avatar, DEFAULT_AVATAR_IMAGE } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,6 +40,7 @@ export default function ProfilePage() {
     pastExperiences: [],
     majors: [],
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadProfile = useCallback(async () => {
     const token = getStoredToken();
@@ -52,7 +54,7 @@ export default function ProfilePage() {
         name: p.name,
         email: p.email,
         major: p.major,
-        age: p.age,
+        avatarUrl: p.avatarUrl ?? undefined,
         interests: p.interests ?? [],
         strengths: p.strengths ?? [],
         pastExperiences: p.pastExperiences ?? [],
@@ -109,17 +111,17 @@ export default function ProfilePage() {
     });
   }, []);
 
-  const toggleMajor = useCallback((value: string) => {
-    setDraft((current) => {
-      const exists = current.majors.includes(value);
-      return {
-        ...current,
-        majors: exists
-          ? current.majors.filter((x) => x !== value)
-          : [...current.majors, value],
-      };
-    });
-  }, []);
+  function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setDraft((c) => ({ ...c, avatarUrl: dataUrl }));
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -131,8 +133,8 @@ export default function ProfilePage() {
         {
           name: draft.name,
           email: draft.email,
-          major: draft.majors.length > 0 ? draft.majors.join(", ") : undefined,
-          age: draft.age,
+          major: draft.major,
+          avatarUrl: draft.avatarUrl ?? null,
           interests: draft.interests,
           strengths: draft.strengths,
           pastExperiences: draft.pastExperiences,
@@ -156,8 +158,9 @@ export default function ProfilePage() {
       : "";
 
   return (
-    <Card className="mx-auto mt-10 w-full max-w-2xl">
-      <CardHeader>
+    <div style={{ viewTransitionName: "vt-content" }}>
+      <Card className="mx-auto mt-10 w-full max-w-2xl">
+        <CardHeader>
         <CardTitle>Profile &amp; preferences</CardTitle>
         <CardDescription>
           Same options as onboarding. Update your interests, strengths, and
@@ -166,6 +169,42 @@ export default function ProfilePage() {
       </CardHeader>
       <CardContent>
         <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="flex flex-col items-start gap-3">
+            <Label>Profile photo</Label>
+            <div className="flex items-center gap-4">
+              <Avatar size="lg" className="shrink-0 ring-1 ring-zinc-200">
+                <Avatar.Image
+                  src={draft.avatarUrl ?? DEFAULT_AVATAR_IMAGE}
+                  alt={draft.name ?? "Profile"}
+                />
+                <Avatar.Fallback>
+                  <Avatar.UserIcon />
+                </Avatar.Fallback>
+              </Avatar>
+              <div className="flex flex-col gap-1">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                  aria-label="Upload profile photo"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Upload picture
+                </Button>
+                <p className="text-xs text-zinc-500">
+                  JPG, PNG or GIF. Your default is the silhouette until you upload.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="name">Name</Label>
@@ -312,6 +351,7 @@ export default function ProfilePage() {
           </div>
         </form>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }

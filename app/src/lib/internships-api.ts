@@ -144,7 +144,7 @@ export async function patchProfile(
       | "name"
       | "email"
       | "major"
-      | "age"
+      | "avatarUrl"
       | "interests"
       | "strengths"
       | "pastExperiences"
@@ -171,7 +171,7 @@ export async function patchProfile(
       name: payload.name ?? existing?.name,
       email: payload.email ?? existing?.email,
       major: payload.major ?? existing?.major,
-      age: payload.age ?? existing?.age,
+      avatarUrl: payload.avatarUrl !== undefined ? payload.avatarUrl : existing?.avatarUrl,
       interests: payload.interests ?? existing?.interests ?? [],
       strengths: payload.strengths ?? existing?.strengths ?? [],
       pastExperiences: payload.pastExperiences ?? existing?.pastExperiences ?? [],
@@ -290,15 +290,23 @@ export async function fetchInternships(params: {
   type: InternshipKind;
   interests: string[];
   major?: string;
+  strengths?: string[];
   minScore: number;
   page?: number;
+  /** Free-form search keywords (e.g. from Jobs page search bar). */
+  keywords?: string;
+  /** Location for job search (e.g. city or zip). */
+  location?: string;
 }): Promise<{ items: MatchedListing[]; kind: InternshipKind }> {
   const search = new URLSearchParams();
   search.set("type", params.type);
   search.set("interests", params.interests.join(","));
   if (params.major) search.set("major", params.major);
+  if (params.strengths?.length) search.set("strengths", params.strengths.join(","));
   search.set("minScore", String(params.minScore));
   if (params.page != null) search.set("page", String(params.page));
+  if (params.keywords?.trim()) search.set("keywords", params.keywords.trim());
+  if (params.location?.trim()) search.set("location", params.location.trim());
 
   const url = `/api/internships?${search.toString()}`;
   const res = await fetch(url);

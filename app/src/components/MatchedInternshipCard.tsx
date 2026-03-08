@@ -1,19 +1,29 @@
 import Link from "next/link";
 import type { MatchedListing } from "@/lib/internships-api";
 
-export function MatchedInternshipCard({ item }: { item: MatchedListing }) {
+export function MatchedInternshipCard({
+  item,
+  disableTitleLink,
+}: {
+  item: MatchedListing;
+  disableTitleLink?: boolean;
+}) {
   return (
     <article className="flex flex-col justify-between rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
       <div>
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900">
-              <Link
-                href={`/dashboard/internships/${encodeURIComponent(item.id)}`}
-                className="hover:underline"
-              >
-                {item.title}
-              </Link>
+              {disableTitleLink ? (
+                <span className="block">{item.title}</span>
+              ) : (
+                <Link
+                  href={`/dashboard/internships/${encodeURIComponent(item.id)}`}
+                  className="hover:underline"
+                >
+                  {item.title}
+                </Link>
+              )}
             </h3>
             <p className="mt-1 text-xs font-medium uppercase tracking-wide text-zinc-500">
               {item.company}
@@ -40,6 +50,7 @@ export function MatchedInternshipCard({ item }: { item: MatchedListing }) {
             target="_blank"
             rel="noreferrer"
             className="font-medium text-zinc-900 underline underline-offset-2"
+            onClick={disableTitleLink ? (e) => e.stopPropagation() : undefined}
           >
             Apply
           </a>
