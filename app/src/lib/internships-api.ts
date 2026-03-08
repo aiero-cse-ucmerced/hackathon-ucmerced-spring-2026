@@ -144,6 +144,31 @@ function buildHeaders(token?: string): Record<string, string> {
 }
 
 /**
+ * Upload avatar to Workers API (R2). Returns the avatar URL on success.
+ */
+export async function uploadAvatar(file: File, token: string): Promise<string> {
+  if (!env.useWorkersApi) throw new Error("Avatar upload requires Workers API");
+  const formData = new FormData();
+  formData.append("avatar", file);
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+  };
+  if (env.apiKey) headers["X-API-Key"] = env.apiKey;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${env.workersApiUrl}/api/profile/avatar`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error ?? "Avatar upload failed");
+  }
+  const data = (await res.json()) as { avatarUrl: string };
+  return data.avatarUrl;
+}
+
+/**
  * Reads profile from localStorage only (sync, for offline-first).
  */
 function getLocalProfile(): UserProfile | null {

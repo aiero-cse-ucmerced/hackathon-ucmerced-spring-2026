@@ -1,6 +1,10 @@
 /**
  * UncookedAura – Cloudflare and API environment variables.
  * All client-visible vars must be prefixed with NEXT_PUBLIC_.
+ *
+ * The frontend only communicates with the backend (Workers API).
+ * The backend uses Hyperdrive for database access—the frontend never
+ * talks to Hyperdrive directly.
  */
 
 function getEnv(key: string): string {

@@ -30,6 +30,7 @@ export async function workerCheckEmail(email: string): Promise<{ exists: boolean
   const headers: Record<string, string> = {};
   if (env.apiKey) headers["X-API-Key"] = env.apiKey;
   const res = await fetch(url, { headers });
+  if (res.status === 429) return { exists: false }; // Rate limited; treat as unknown
   if (!res.ok) return { exists: false };
   const data = (await res.json()) as { exists?: boolean };
   return { exists: !!data.exists };
@@ -51,9 +52,13 @@ export async function workerLogin(params: {
       turnstile_token: params.turnstile_token,
     }),
   });
+  if (res.status === 429) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error || "Too many login attempts. Try again later.");
+  }
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error((data as { error?: string }).error || "Login failed");
+    throw new Error((data as { error?: string }).error || "Invalid email or password.");
   }
   return res.json() as Promise<AuthResponse>;
 }
@@ -78,6 +83,10 @@ export async function workerSignup(params: {
       turnstile_token: params.turnstile_token,
     }),
   });
+  if (res.status === 429) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error || "Too many requests. Try again later.");
+  }
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error((data as { error?: string }).error || "Sign up failed");
@@ -143,6 +152,10 @@ export async function workerGoogleLogin(idToken: string): Promise<AuthResponse> 
     headers: buildHeaders(),
     body: JSON.stringify({ id_token: idToken }),
   });
+  if (res.status === 429) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error || "Too many requests. Try again later.");
+  }
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error((data as { error?: string }).error || "Google sign-in failed");

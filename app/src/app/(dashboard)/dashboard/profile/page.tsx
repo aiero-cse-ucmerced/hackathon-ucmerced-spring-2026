@@ -17,6 +17,7 @@ import { useAuth } from "@/components/AuthProvider";
 import {
   getProfile,
   patchProfile,
+  uploadAvatar,
   storeResume,
   getStoredResume,
   WORKING_FIELD_INTERESTS,
@@ -25,6 +26,7 @@ import {
   type UserProfile,
 } from "@/lib/internships-api";
 import { getStoredToken } from "@/lib/auth";
+import { env } from "@/lib/env";
 import {
   isValidDisplayName,
   sanitizeDisplayName,
@@ -144,8 +146,9 @@ export default function ProfilePage() {
   }, []);
 
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
-  function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
@@ -155,12 +158,25 @@ export default function ProfilePage() {
       return;
     }
     setAvatarError(null);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      setDraft((c) => ({ ...c, avatarUrl: dataUrl }));
-    };
-    reader.readAsDataURL(file);
+    const token = getStoredToken();
+    if (env.useWorkersApi && token) {
+      setAvatarUploading(true);
+      try {
+        const avatarUrl = await uploadAvatar(file, token);
+        setDraft((c) => ({ ...c, avatarUrl }));
+      } catch (e) {
+        setAvatarError(e instanceof Error ? e.message : "Upload failed.");
+      } finally {
+        setAvatarUploading(false);
+      }
+    } else {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        setDraft((c) => ({ ...c, avatarUrl: dataUrl }));
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   const [submitErrors, setSubmitErrors] = useState<{ name?: string }>({});
@@ -247,6 +263,7 @@ export default function ProfilePage() {
                 <input
                   ref={fileInputRef}
                   type="file"
+                  disabled={avatarUploading}
                   accept="image/*"
                   onChange={handleAvatarChange}
                   className="hidden"
@@ -256,9 +273,10 @@ export default function ProfilePage() {
                   type="button"
                   variant="outline"
                   size="sm"
+                  disabled={avatarUploading}
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  Upload picture
+                  {avatarUploading ? "Uploading…" : "Upload picture"}
                 </Button>
                 <p className="text-xs text-zinc-500">
                   JPG, PNG or GIF. Max 2MB.

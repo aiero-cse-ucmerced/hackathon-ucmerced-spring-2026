@@ -42,7 +42,10 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
-  const disabled = submitting || (mounted && !online);
+  const disabled =
+    submitting ||
+    (mounted && !online) ||
+    !env.useWorkersApi;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -70,24 +73,25 @@ export default function LoginPage() {
       return;
     }
 
+    if (!env.useWorkersApi) {
+      setError("Sign in is not configured. Please configure the server.");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      if (env.useWorkersApi) {
-        const { token: authToken } = await workerLogin({
-          email: email.trim().toLowerCase(),
-          password,
-          turnstile_token: token ?? undefined,
-        });
-        signIn(
-          { name: email.split("@")[0] ?? "Student", email },
-          authToken
-        );
-      } else {
-        signIn({ name: email.split("@")[0] ?? "Student", email });
-      }
+      const { token: authToken } = await workerLogin({
+        email: email.trim().toLowerCase(),
+        password,
+        turnstile_token: token ?? undefined,
+      });
+      signIn(
+        { name: email.split("@")[0] ?? "Student", email },
+        authToken
+      );
       router.replace("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed.");
+      setError(err instanceof Error ? err.message : "Invalid email or password.");
     } finally {
       setSubmitting(false);
     }
@@ -248,7 +252,12 @@ export default function LoginPage() {
               {error}
             </p>
           )}
-          {mounted && !online && !error && (
+          {!env.useWorkersApi && (
+            <p className="auth-field-3 text-sm text-amber-600" role="alert">
+              Sign in requires server configuration. Set NEXT_PUBLIC_CF_WORKERS_API_URL.
+            </p>
+          )}
+          {mounted && !online && !error && env.useWorkersApi && (
             <p className="auth-field-3 text-sm text-amber-600">
               You&apos;re offline. Connect to the internet to login.
             </p>

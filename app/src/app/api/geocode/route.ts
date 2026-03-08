@@ -1,14 +1,36 @@
 /**
  * Nominatim geocode proxy. Avoids CORS when frontend calls from browser.
  * Use ?q=... for forward geocode, ?lat=&lng= for reverse geocode.
+ * Rate limited: 30 requests/min per IP.
  */
 
 import { NextResponse } from "next/server";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 const NOMINATIM_BASE = "https://nominatim.openstreetmap.org";
 const USER_AGENT = "UncookedAura/1.0 (https://github.com/uncookedaura; contact@example.com)";
 
 export async function GET(request: Request) {
+  const { max, windowMs } = RATE_LIMITS.geocode;
+  const { allowed, remaining, resetAt } = checkRateLimit(
+    request,
+    "geocode",
+    max,
+    windowMs
+  );
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil((resetAt - Date.now()) / 1000)),
+          "X-RateLimit-Remaining": "0",
+        },
+      }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q");
   const lat = searchParams.get("lat");

@@ -2,10 +2,12 @@
  * POST /api/resume/extract
  * Accepts resume (base64) and uses Gemini to extract past experiences.
  * Returns { pastExperiences: string[], tips?: string[] } for profile prefill.
+ * Rate limited: 10 requests per 15 min per IP.
  */
 
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 const ALLOWED_MIMES = [
   "application/pdf",
@@ -16,6 +18,25 @@ const ALLOWED_MIMES = [
 const MAX_BASE64_LEN = 7_000_000; // ~5MB base64
 
 export async function POST(request: Request) {
+  const { max, windowMs } = RATE_LIMITS.resumeExtract;
+  const { allowed, resetAt } = checkRateLimit(
+    request,
+    "resume-extract",
+    max,
+    windowMs
+  );
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil((resetAt - Date.now()) / 1000)),
+        },
+      }
+    );
+  }
+
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim();
   if (!apiKey) {
     return NextResponse.json(

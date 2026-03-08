@@ -61,16 +61,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               Saved
             </Link>
             <Link
-              href="/dashboard/events"
-              className={
-                pathname === "/dashboard/events"
-                  ? "text-zinc-900"
-                  : "text-zinc-600 hover:text-zinc-900"
-              }
-            >
-              Events
-            </Link>
-            <Link
               href="/dashboard/connections"
               className={
                 pathname?.startsWith("/dashboard/connections")

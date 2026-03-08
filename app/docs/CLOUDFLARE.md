@@ -6,7 +6,7 @@ Job search finder market (Comp Sci & Engineering and related majors) using **Clo
 
 - **Frontend (this app)**: Next.js deployed to Cloudflare Pages/Workers via OpenNext. Reads env from `.env` and calls both backends.
 - **Dual backend**:
-  - **Cloudflare Workers API** (`backend/`): Profile (GET/PATCH), avatar upload, social-events (Eventbrite + Gemini), geocode, auth (sign-up, login). Deploy with `wrangler`. Set `NEXT_PUBLIC_CF_WORKERS_API_URL`.
+  - **Cloudflare Workers API** (`backend/`): Profile (GET/PATCH), avatar upload, social-events (Eventbrite + Gemini), geocode, auth (sign-up, login). The backend uses **Cloudflare Hyperdrive** to connect to your Postgres database. The frontend only talks to this backend. Deploy with `wrangler`. Set `NEXT_PUBLIC_CF_WORKERS_API_URL`.
   - **Self-hosted Express 5 API** (`self-hosted/`): Account settings (change email, password, sign out), passkeys (WebAuthn). Deploy with Docker Compose. Set `NEXT_PUBLIC_SELF_HOSTED_API_URL`.
 - **R2**: Used by the Worker for avatar storage.
 
@@ -16,7 +16,7 @@ Copy `app/.env.example` to `app/.env` and set:
 
 | Variable | Description |
 |----------|-------------|
-| `NEXT_PUBLIC_CF_WORKERS_API_URL` | Base URL of your Workers API (profile, social-events, geocode, auth). Leave empty to use mock data. |
+| `NEXT_PUBLIC_CF_WORKERS_API_URL` | Base URL of your Workers API (profile, social-events, geocode, auth). The frontend only talks to this backend; the backend uses Hyperdrive for the database. Leave empty to use mock data. |
 | `NEXT_PUBLIC_SELF_HOSTED_API_URL` | Base URL of your self-hosted API (account settings, passkeys). |
 | `NEXT_PUBLIC_CF_PAGES_URL` | Canonical app URL when on Pages (e.g. `https://uncookedaura.pages.dev`). |
 | `NEXT_PUBLIC_CF_API_KEY` | Optional API key sent as `X-API-Key` to the Worker. |

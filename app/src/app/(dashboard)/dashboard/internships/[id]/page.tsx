@@ -379,7 +379,8 @@ export default function InternshipDetailPage() {
 
         {/* Sidebar — apply, save, complete, upload resume */}
         <aside className="space-y-6">
-          <Card className="sticky top-4 border-zinc-200">
+          <div className="sticky top-4 space-y-6">
+          <Card className="border-zinc-200">
             <CardHeader>
               <CardTitle className="text-base">Apply & track</CardTitle>
               <CardDescription>
@@ -408,7 +409,7 @@ export default function InternshipDetailPage() {
             </CardContent>
           </Card>
 
-          <Card className="sticky top-4 border-zinc-200">
+          <Card className="border-zinc-200">
             <CardHeader>
               <CardTitle className="text-base">Upload your resume</CardTitle>
               <CardDescription>
@@ -424,6 +425,7 @@ export default function InternshipDetailPage() {
               />
             </CardContent>
           </Card>
+          </div>
         </aside>
       </div>
     </div>

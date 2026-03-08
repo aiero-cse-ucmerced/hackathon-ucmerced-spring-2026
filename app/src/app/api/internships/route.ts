@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 type JoobleJob = {
   id: string;
@@ -351,6 +352,26 @@ function joobleCacheKey(params: {
 }
 
 export async function GET(request: Request) {
+  const { max, windowMs } = RATE_LIMITS.internships;
+  const { allowed, remaining, resetAt } = checkRateLimit(
+    request,
+    "internships",
+    max,
+    windowMs
+  );
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again later." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil((resetAt - Date.now()) / 1000)),
+          "X-RateLimit-Remaining": "0",
+        },
+      }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
 
   const kindParam = searchParams.get("type") as InternshipKind | null;
