@@ -22,6 +22,17 @@ import { workerLogin, workerGoogleLogin } from "@/lib/worker-auth-api";
 
 const MIN_PASSWORD_LENGTH = 8;
 
+/** Basic email format validation. */
+function isValidEmailFormat(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  const at = trimmed.indexOf("@");
+  if (at <= 0 || at === trimmed.length - 1) return false;
+  const domain = trimmed.slice(at + 1);
+  if (!domain.includes(".")) return false;
+  return trimmed.length <= 254;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { signIn } = useAuth();
@@ -72,8 +83,8 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       if (env.useWorkersApi) {
-        const { token: authToken, userId } = await workerLogin({
-          email,
+        const { token: authToken } = await workerLogin({
+          email: email.trim().toLowerCase(),
           password,
           turnstile_token: token ?? undefined,
         });

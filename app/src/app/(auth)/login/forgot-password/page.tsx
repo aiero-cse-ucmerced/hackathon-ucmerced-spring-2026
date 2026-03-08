@@ -24,6 +24,16 @@ import { toast } from "sonner";
 const MIN_PASSWORD_LENGTH = 8;
 const SUPPORT_LINK = "/contact";
 
+function isValidEmailFormat(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  const at = trimmed.indexOf("@");
+  if (at <= 0 || at === trimmed.length - 1) return false;
+  const domain = trimmed.slice(at + 1);
+  if (!domain.includes(".")) return false;
+  return trimmed.length <= 254;
+}
+
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { online } = useOnlineStatus();
@@ -70,6 +80,10 @@ export default function ForgotPasswordPage() {
     }
     if (!email.trim()) {
       setError("Enter your email address.");
+      return;
+    }
+    if (!isValidEmailFormat(email)) {
+      setError("Enter a valid email address.");
       return;
     }
     if (!env.useWorkersApi) {

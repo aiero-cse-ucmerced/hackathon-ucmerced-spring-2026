@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ViewTransitionLink } from "@/components/ViewTransitionLink";
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,9 +18,20 @@ import { useAuth } from "@/components/AuthProvider";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { useOnlineStatus } from "@/lib/use-online-status";
 import { env } from "@/lib/env";
-import { workerSignup, workerGoogleLogin } from "@/lib/worker-auth-api";
+import { workerSignup, workerGoogleLogin, workerCheckEmail } from "@/lib/worker-auth-api";
 
 const MIN_PASSWORD_LENGTH = 8;
+
+/** Basic email format validation (RFC 5322 simplified). */
+function isValidEmailFormat(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  const at = trimmed.indexOf("@");
+  if (at <= 0 || at === trimmed.length - 1) return false;
+  const domain = trimmed.slice(at + 1);
+  if (!domain.includes(".")) return false;
+  return trimmed.length <= 254;
+}
 
 export default function SignupPage() {
   const router = useRouter();
@@ -40,8 +51,48 @@ export default function SignupPage() {
     password?: string;
     confirmPassword?: string;
   }>({});
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const checkEmailTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const disabled = submitting || !online;
+  const disabled = submitting || !online || !!fieldErrors.email;
+
+  const handleEmailBlur = useCallback(() => {
+    const trimmed = email.trim();
+    if (!trimmed || !env.useWorkersApi) return;
+    if (!isValidEmailFormat(trimmed)) return;
+
+    if (checkEmailTimeoutRef.current) {
+      clearTimeout(checkEmailTimeoutRef.current);
+      checkEmailTimeoutRef.current = null;
+    }
+
+    checkEmailTimeoutRef.current = setTimeout(async () => {
+      checkEmailTimeoutRef.current = null;
+      setCheckingEmail(true);
+      setFieldErrors((p) => ({ ...p, email: undefined }));
+      try {
+        const { exists } = await workerCheckEmail(trimmed);
+        if (exists) {
+          setFieldErrors((p) => ({ ...p, email: "Email already registered. Sign in instead." }));
+        }
+      } catch {
+        // Ignore check errors; backend will validate on submit
+      } finally {
+        setCheckingEmail(false);
+      }
+    }, 400);
+  }, [email]);
+
+  const handleEmailChange = useCallback((value: string) => {
+    setEmail(value);
+    setFieldErrors((p) => ({ ...p, email: undefined }));
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (checkEmailTimeoutRef.current) clearTimeout(checkEmailTimeoutRef.current);
+    };
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -61,6 +112,7 @@ export default function SignupPage() {
     const errors: typeof fieldErrors = {};
     if (!name.trim()) errors.name = "Name is required.";
     if (!email.trim()) errors.email = "Email is required.";
+    else if (!isValidEmailFormat(email)) errors.email = "Enter a valid email address.";
     if (!password) {
       errors.password = "Password is required.";
     } else if (password.length < MIN_PASSWORD_LENGTH) {
@@ -74,6 +126,8 @@ export default function SignupPage() {
       setFieldErrors(errors);
       return;
     }
+
+    if (fieldErrors.email) return;
 
     setSubmitting(true);
     try {
@@ -90,7 +144,13 @@ export default function SignupPage() {
       }
       router.replace("/onboarding");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign up failed.");
+      const msg = err instanceof Error ? err.message : "Sign up failed.";
+      if (msg.toLowerCase().includes("email already") || msg.toLowerCase().includes("already registered")) {
+        setError(null);
+        setFieldErrors((p) => ({ ...p, email: msg }));
+      } else {
+        setError(msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -140,7 +200,10 @@ export default function SignupPage() {
               required
             />
             {fieldErrors.email && (
-              <p className="text-sm text-red-600" role="alert">{fieldErrors.email}</p>
+              <p id="email-error" className="text-sm text-red-600" role="alert">{fieldErrors.email}</p>
+            )}
+            {checkingEmail && (
+              <p className="text-sm text-zinc-500">Checking…</p>
             )}
           </div>
           <div className="space-y-1.5 auth-field-3">

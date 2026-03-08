@@ -22,6 +22,19 @@ export interface AuthResponse {
   isNewUser?: boolean;
 }
 
+/** GET /api/auth/check-email?email= – returns { exists: boolean }. For signup form validation. */
+export async function workerCheckEmail(email: string): Promise<{ exists: boolean }> {
+  const trimmed = email.trim().toLowerCase();
+  if (!trimmed) return { exists: false };
+  const url = `${env.workersApiUrl}/api/auth/check-email?email=${encodeURIComponent(trimmed)}`;
+  const headers: Record<string, string> = {};
+  if (env.apiKey) headers["X-API-Key"] = env.apiKey;
+  const res = await fetch(url, { headers });
+  if (!res.ok) return { exists: false };
+  const data = (await res.json()) as { exists?: boolean };
+  return { exists: !!data.exists };
+}
+
 /** POST /api/auth/login. Turnstile token required when backend has TURNSTILE_SECRET_KEY set (not used for Google SSO). */
 export async function workerLogin(params: {
   email: string;

@@ -52,6 +52,7 @@ The frontend calls the Worker for:
 - **POST** `/api/profile/avatar` — Multipart upload; Bearer required.
 - **GET** `/api/social-events?lat=&lng=&age=&radius=` — Eventbrite + Gemini personalization.
 - **GET** `/api/geocode?q=...` or `?lat=&lng=` — Nominatim proxy with KV cache.
+- **GET** `/api/auth/check-email?email=` — Returns `{ exists: boolean }`. For signup form validation (email already registered). Optional `X-API-Key`.
 - **POST** `/api/auth/signup` — Body: `{ email, name, password, major? }`. Optional `X-API-Key`.
 - **POST** `/api/auth/login` — Body: `{ email, password }`. Optional `X-API-Key`.
 - **POST** `/api/auth/google` — Body: `{ id_token }` (Google Sign-In credential). Optional `X-API-Key`.
