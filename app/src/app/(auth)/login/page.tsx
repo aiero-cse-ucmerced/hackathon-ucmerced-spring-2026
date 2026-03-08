@@ -254,7 +254,7 @@ export default function LoginPage() {
           )}
           {!env.useWorkersApi && (
             <p className="auth-field-3 text-sm text-amber-600" role="alert">
-              Sign in requires server configuration. Set NEXT_PUBLIC_CF_WORKERS_API_URL.
+              Sign in requires server configuration. Set NEXT_PUBLIC_CF_WORKERS_API_URL or NEXT_PUBLIC_SELF_HOSTED_API_URL in app/.env, then restart the dev server.
             </p>
           )}
           {mounted && !online && !error && env.useWorkersApi && (

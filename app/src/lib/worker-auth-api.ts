@@ -26,7 +26,7 @@ export interface AuthResponse {
 export async function workerCheckEmail(email: string): Promise<{ exists: boolean }> {
   const trimmed = email.trim().toLowerCase();
   if (!trimmed) return { exists: false };
-  const url = `${env.workersApiUrl}/api/auth/check-email?email=${encodeURIComponent(trimmed)}`;
+  const url = `${env.authApiUrl}/api/auth/check-email?email=${encodeURIComponent(trimmed)}`;
   const headers: Record<string, string> = {};
   if (env.apiKey) headers["X-API-Key"] = env.apiKey;
   const res = await fetch(url, { headers });
@@ -42,7 +42,7 @@ export async function workerLogin(params: {
   password: string;
   turnstile_token?: string;
 }): Promise<AuthResponse> {
-  const url = `${env.workersApiUrl}/api/auth/login`;
+  const url = `${env.authApiUrl}/api/auth/login`;
   const res = await fetch(url, {
     method: "POST",
     headers: buildHeaders(),
@@ -71,7 +71,7 @@ export async function workerSignup(params: {
   major?: string;
   turnstile_token?: string;
 }): Promise<AuthResponse> {
-  const url = `${env.workersApiUrl}/api/auth/signup`;
+  const url = `${env.authApiUrl}/api/auth/signup`;
   const res = await fetch(url, {
     method: "POST",
     headers: buildHeaders(),
@@ -99,7 +99,7 @@ export async function workerForgotPassword(params: {
   email: string;
   turnstile_token?: string;
 }): Promise<void> {
-  const url = `${env.workersApiUrl}/api/auth/forgot-password`;
+  const url = `${env.authApiUrl}/api/auth/forgot-password`;
   const res = await fetch(url, {
     method: "POST",
     headers: buildHeaders(),
@@ -124,7 +124,7 @@ export async function workerResetPassword(params: {
   otp: string;
   new_password: string;
 }): Promise<void> {
-  const url = `${env.workersApiUrl}/api/auth/reset-password`;
+  const url = `${env.authApiUrl}/api/auth/reset-password`;
   const res = await fetch(url, {
     method: "POST",
     headers: buildHeaders(),
@@ -146,7 +146,7 @@ export async function workerResetPassword(params: {
 
 /** POST /api/auth/google – body: { id_token }. Returns isNewUser: true when user was just created (redirect to onboarding). */
 export async function workerGoogleLogin(idToken: string): Promise<AuthResponse> {
-  const url = `${env.workersApiUrl}/api/auth/google`;
+  const url = `${env.authApiUrl}/api/auth/google`;
   const res = await fetch(url, {
     method: "POST",
     headers: buildHeaders(),

@@ -34,7 +34,13 @@ export const env = {
 
   /** True if we should call the Workers API for live data. */
   get useWorkersApi(): boolean {
-    return this.workersApiUrl.length > 0;
+    return this.workersApiUrl.length > 0 || this.selfHostedApiUrl.length > 0;
+  },
+
+  /** Base URL for auth (login, signup, etc.): Workers if set, else self-hosted. */
+  get authApiUrl(): string {
+    if (this.workersApiUrl.length > 0) return this.workersApiUrl;
+    return this.selfHostedApiUrl;
   },
 
   /** True if self-hosted API is configured (account settings). */
