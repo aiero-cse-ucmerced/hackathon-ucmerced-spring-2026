@@ -25,6 +25,8 @@ For local Cloudflare preview, copy `.dev.vars.example` to `.dev.vars` and set `N
 
 ## Deploy this frontend to Cloudflare
 
+**Build command:** Use `yarn build` (or `npm run build`). This runs `opennextjs-cloudflare build` and creates `.open-next/worker.js`, which wrangler needs. Do not use plain `next build` for Cloudflare deployment.
+
 1. Install deps: `yarn` (or `npm install`).
 2. Log in: `npx wrangler login`.
 3. (Optional) Create R2 bucket for Next.js cache and uncomment `r2_buckets` in `wrangler.jsonc`:
