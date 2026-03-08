@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { ViewTransitionLink } from "@/components/ViewTransitionLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -69,12 +69,12 @@ export default function LoginPage() {
               Enter your email below to login to your account.
             </CardDescription>
           </div>
-          <Link
+          <ViewTransitionLink
             href="/signup"
             className="shrink-0 text-sm font-medium text-zinc-900 hover:text-zinc-700"
           >
             Sign Up
-          </Link>
+          </ViewTransitionLink>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-5" aria-busy="true" aria-label="Loading form">
@@ -104,12 +104,12 @@ export default function LoginPage() {
             Enter your email below to login to your account.
           </CardDescription>
         </div>
-        <Link
+        <ViewTransitionLink
           href="/signup"
           className="shrink-0 text-sm font-medium text-zinc-900 hover:text-zinc-700"
         >
           Sign Up
-        </Link>
+        </ViewTransitionLink>
       </CardHeader>
       <CardContent className="space-y-6">
         <form className="space-y-5" onSubmit={handleSubmit}>
@@ -133,13 +133,12 @@ export default function LoginPage() {
               <Label htmlFor="password" className="text-sm font-medium text-zinc-900">
                 Password
               </Label>
-              <button
-                type="button"
-                onClick={() => router.push("/login/forgot-password")}
+              <ViewTransitionLink
+                href="/login/forgot-password"
                 className="text-sm font-medium text-zinc-700 hover:text-zinc-900"
               >
                 Forgot your password?
-              </button>
+              </ViewTransitionLink>
             </div>
             <Input
               id="password"

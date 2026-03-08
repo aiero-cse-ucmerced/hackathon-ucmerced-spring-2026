@@ -65,7 +65,10 @@ export default function SavedPage() {
 
   if (savedIds.length === 0) {
     return (
-      <div className="mt-10 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-600">
+      <div
+        className="mt-10 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-600"
+        style={{ viewTransitionName: "vt-content" }}
+      >
         You haven&apos;t saved any internships yet. Browse matches on the{" "}
         <Link
           href="/dashboard"
@@ -79,7 +82,7 @@ export default function SavedPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" style={{ viewTransitionName: "vt-content" }}>
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-lg font-semibold text-zinc-900">
           Saved internships

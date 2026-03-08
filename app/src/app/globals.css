@@ -85,3 +85,73 @@ body {
 .onboarding-step-exit-back {
   animation: onboarding-slide-out-back 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
+
+/* View Transitions API: root hidden (no flash); named groups slide with stagger */
+@supports (view-transition-name: none) {
+  ::view-transition-old(root) {
+    animation: none;
+    opacity: 0;
+  }
+  ::view-transition-new(root) {
+    animation: none;
+    opacity: 0;
+  }
+  /* Page-level: dashboard sections (staggered, 2s duration) */
+  ::view-transition-old(vt-section-1) {
+    animation: view-transition-slide-out-right 2s ease-in-out 0s forwards;
+  }
+  ::view-transition-new(vt-section-1) {
+    animation: view-transition-slide-in-from-left 2s ease-in-out 0.08s forwards;
+  }
+  ::view-transition-old(vt-section-2) {
+    animation: view-transition-slide-out-right 2s ease-in-out 0.06s forwards;
+  }
+  ::view-transition-new(vt-section-2) {
+    animation: view-transition-slide-in-from-left 2s ease-in-out 0.16s forwards;
+  }
+  ::view-transition-old(vt-section-3) {
+    animation: view-transition-slide-out-right 2s ease-in-out 0.12s forwards;
+  }
+  ::view-transition-new(vt-section-3) {
+    animation: view-transition-slide-in-from-left 2s ease-in-out 0.24s forwards;
+  }
+  ::view-transition-old(vt-section-4) {
+    animation: view-transition-slide-out-right 2s ease-in-out 0.18s forwards;
+  }
+  ::view-transition-new(vt-section-4) {
+    animation: view-transition-slide-in-from-left 2s ease-in-out 0.32s forwards;
+  }
+  /* Page-level: Jobs, Saved, Profile (single content block) */
+  ::view-transition-old(vt-content) {
+    animation: view-transition-slide-out-right 2s ease-in-out 0s forwards;
+  }
+  ::view-transition-new(vt-content) {
+    animation: view-transition-slide-in-from-left 2s ease-in-out 0.08s forwards;
+  }
+}
+@keyframes view-transition-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes view-transition-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes view-transition-slide-out-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes view-transition-slide-in-from-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}

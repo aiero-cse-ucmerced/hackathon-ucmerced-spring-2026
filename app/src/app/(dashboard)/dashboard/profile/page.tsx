@@ -147,8 +147,9 @@ export default function ProfilePage() {
       : "";
 
   return (
-    <Card className="mx-auto mt-10 w-full max-w-2xl">
-      <CardHeader>
+    <div style={{ viewTransitionName: "vt-content" }}>
+      <Card className="mx-auto mt-10 w-full max-w-2xl">
+        <CardHeader>
         <CardTitle>Profile &amp; preferences</CardTitle>
         <CardDescription>
           Same options as onboarding. Update your interests, strengths, and
@@ -310,6 +311,7 @@ export default function ProfilePage() {
           </div>
         </form>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { ViewTransitionLink } from "@/components/ViewTransitionLink";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -164,13 +165,12 @@ export default function SignupPage() {
           </Button>
         </form>
         <div className="mt-4 text-sm text-zinc-600">
-          <button
-            type="button"
+          <ViewTransitionLink
+            href="/login"
             className="text-left text-sm text-zinc-700 underline underline-offset-2"
-            onClick={() => router.push("/login")}
           >
             Already have an account? Sign in
-          </button>
+          </ViewTransitionLink>
         </div>
       </CardContent>
     </Card>
