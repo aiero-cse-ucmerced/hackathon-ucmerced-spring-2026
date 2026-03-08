@@ -34,6 +34,7 @@ const SCORE_OPTIONS = [50, 60, 70, 80];
 const ENTRY_UNLOCK_THRESHOLD = 3;
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const { profile, save, loading } = useProfile();
   const [avatarError, setAvatarError] = useState(false);

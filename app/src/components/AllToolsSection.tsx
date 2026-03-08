@@ -1,57 +1,81 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import Image from "next/image";
 
-const BANNER_LOGOS: { filename: string; name: string }[] = [
-  { filename: "Pinterest_logo.png", name: "Pinterest" },
-  { filename: "Visa_logo.png", name: "Visa" },
-  { filename: "Meta_logo.png", name: "Meta" },
-  { filename: "Spotify_logo.png", name: "Spotify" },
-  { filename: "BBC_logo.png", name: "BBC" },
-  { filename: "Apple_logo.png", name: "Apple" },
-  { filename: "Disney_logo.png", name: "Disney" },
+/** Brand slug -> Clearbit domain for transparent logo. Grey applied via CSS. */
+const BRAND_ROW_1: { name: string; domain: string }[] = [
+  { name: "Pinterest", domain: "pinterest.com" },
+  { name: "VAYNERMEDIA", domain: "vaynermedia.com" },
+  { name: "Disney", domain: "disney.com" },
+  { name: "facebook", domain: "facebook.com" },
+  { name: "VISA", domain: "visa.com" },
+  { name: "Booking.com", domain: "booking.com" },
+];
+const BRAND_ROW_2: { name: string; domain: string }[] = [
+  { name: "Google", domain: "google.com" },
+  { name: "Meta", domain: "meta.com" },
+  { name: "BBC", domain: "bbc.com" },
+  { name: "Spotify", domain: "spotify.com" },
+  { name: "PELOTON", domain: "onepeloton.com" },
+  { name: "xero", domain: "xero.com" },
+  { name: "NI", domain: "ni.com" },
 ];
 
-function BrandLogo({ logo }: { logo: { filename: string; name: string } }) {
-  const [failed, setFailed] = useState(false);
-  const src = `/logos/${logo.filename}`;
+const logoBase = "https://logo.clearbit.com";
 
-  const onError = useCallback(() => setFailed(true), []);
-
-  if (failed) {
-    return (
-      <span className="text-sm font-semibold uppercase tracking-wider text-zinc-500">
-        {logo.name}
-      </span>
-    );
-  }
-
+function BrandLogo({
+  name,
+  domain,
+}: {
+  name: string;
+  domain: string;
+}) {
+  const src = `${logoBase}/${domain}`;
   return (
-    <img
-      src={src}
-      alt={logo.name}
-      className="h-[3.75em] w-auto object-contain"
-      onError={onError}
-    />
+    <span
+      className="relative flex h-8 w-12 shrink-0 items-center justify-center text-zinc-500 [filter:grayscale(100%);opacity:0.7] hover:opacity-90"
+      title={name}
+    >
+      <Image
+        src={src}
+        alt=""
+        width={96}
+        height={48}
+        className="object-contain object-center"
+        unoptimized
+        onError={(e) => {
+          const target = e.currentTarget;
+          target.style.display = "none";
+          const fallback = target.nextElementSibling as HTMLElement | null;
+          if (fallback) fallback.style.display = "flex";
+        }}
+      />
+      <span
+        className="absolute inset-0 hidden items-center justify-center text-xs font-semibold uppercase tracking-wider"
+        aria-hidden
+      >
+        {name}
+      </span>
+    </span>
   );
 }
 
 export function AllToolsSection() {
   return (
     <>
-      {/* Brand logos - from app/public/logos/ */}
-      <section className="border-t border-zinc-100 bg-white py-12 text-sm">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-12 gap-y-4 px-6">
-          {BANNER_LOGOS.map((logo) => (
-            <BrandLogo key={logo.filename} logo={logo} />
-          ))}
+      {/* Brand logos - transparent, grey via CSS */}
+      <section className="border-t border-zinc-100 bg-white py-12">
+        <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-8 px-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
+            {BRAND_ROW_1.map(({ name, domain }) => (
+              <BrandLogo key={domain} name={name} domain={domain} />
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
+            {BRAND_ROW_2.map(({ name, domain }) => (
+              <BrandLogo key={domain} name={name} domain={domain} />
+            ))}
+          </div>
         </div>
       </section>
 
