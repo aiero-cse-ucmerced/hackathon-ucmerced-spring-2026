@@ -7,6 +7,7 @@ import { InternshipCardSkeleton } from "@/components/skeleton/InternshipCardSkel
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/AuthProvider";
 import { useProfile } from "@/lib/use-profile";
+import { useOnlineStatus } from "@/lib/use-online-status";
 import { fetchInternships } from "@/lib/internships-api";
 import type { MatchedListing } from "@/lib/internships-api";
 import { getJobsSearchCache, setJobsSearchCache } from "@/lib/jobs-search-cache";
@@ -16,6 +17,7 @@ const DEFAULT_LOCATION = "Merced, CA";
 export default function JobsPage() {
   const { user } = useAuth();
   const { profile, save } = useProfile();
+  const { online } = useOnlineStatus();
   const [keywords, setKeywords] = useState("");
   const [location, setLocation] = useState(DEFAULT_LOCATION);
   const [items, setItems] = useState<MatchedListing[]>([]);
@@ -120,13 +122,18 @@ export default function JobsPage() {
       </header>
 
       <section aria-label="Search">
+        {!online && (
+          <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Searching requires an internet connection. Your matched internships are available on the Dashboard when offline.
+          </p>
+        )}
         <JobSearchBar
         keywords={keywords}
         location={location}
         onKeywordsChange={setKeywords}
         onLocationChange={setLocation}
         onSearch={runSearch}
-        disabled={loading}
+        disabled={loading || !online}
       />
       </section>
 

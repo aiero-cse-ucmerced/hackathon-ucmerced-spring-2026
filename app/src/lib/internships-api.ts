@@ -4,6 +4,12 @@
  */
 
 import { env } from "./env";
+import {
+  buildMatchedCacheKey,
+  isMatchedQuery,
+  setMatchedInternshipsCache,
+  getMatchedInternshipsCache,
+} from "./internships-offline-cache";
 
 export interface UserProfile {
   name?: string;
@@ -359,11 +365,32 @@ export async function fetchInternships(params: {
   strengths?: string[];
   minScore: number;
   page?: number;
-  /** Free-form search keywords (e.g. from Jobs page search bar). */
+  /** Free-form search keywords (e.g. from Jobs page search bar). Requires internet. */
   keywords?: string;
-  /** Location for job search (e.g. city or zip). */
+  /** Location for job search (e.g. city or zip). Requires internet. */
   location?: string;
 }): Promise<{ items: MatchedListing[]; kind: InternshipKind }> {
+  const isMatched = isMatchedQuery({
+    keywords: params.keywords,
+    location: params.location,
+  });
+
+  if (typeof navigator !== "undefined" && !navigator.onLine && isMatched) {
+    const cacheKey = buildMatchedCacheKey({
+      kind: params.type,
+      interests: params.interests,
+      strengths: params.strengths ?? [],
+      major: params.major,
+      minScore: params.minScore,
+      page: params.page,
+    });
+    const cached = await getMatchedInternshipsCache(cacheKey);
+    if (cached) {
+      return { items: cached.items, kind: cached.kind as InternshipKind };
+    }
+    return { items: [], kind: params.type };
+  }
+
   const search = new URLSearchParams();
   search.set("type", params.type);
   search.set("interests", params.interests.join(","));
@@ -384,7 +411,19 @@ export async function fetchInternships(params: {
     const res = await fetch(workerUrl, { headers });
     if (res.ok) {
       const data = (await res.json()) as { items: MatchedListing[]; kind: InternshipKind };
-      return { items: data.items ?? [], kind: data.kind ?? params.type };
+      const result = { items: data.items ?? [], kind: data.kind ?? params.type };
+      if (isMatched && result.items.length > 0) {
+        const cacheKey = buildMatchedCacheKey({
+          kind: params.type,
+          interests: params.interests,
+          strengths: params.strengths ?? [],
+          major: params.major,
+          minScore: params.minScore,
+          page: params.page,
+        });
+        await setMatchedInternshipsCache(cacheKey, result.items, result.kind);
+      }
+      return result;
     }
   }
 
@@ -393,5 +432,17 @@ export async function fetchInternships(params: {
     return { items: [], kind: params.type };
   }
   const data = (await res.json()) as { items: MatchedListing[]; kind: InternshipKind };
-  return { items: data.items ?? [], kind: data.kind ?? params.type };
+  const result = { items: data.items ?? [], kind: data.kind ?? params.type };
+  if (isMatched && result.items.length > 0) {
+    const cacheKey = buildMatchedCacheKey({
+      kind: params.type,
+      interests: params.interests,
+      strengths: params.strengths ?? [],
+      major: params.major,
+      minScore: params.minScore,
+      page: params.page,
+    });
+    await setMatchedInternshipsCache(cacheKey, result.items, result.kind);
+  }
+  return result;
 }

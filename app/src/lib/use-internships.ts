@@ -23,11 +23,6 @@ export function useInternships(options: {
     let cancelled = false;
 
     async function load() {
-      if (!online) {
-        setLoading(false);
-        return;
-      }
-
       setLoading(true);
       const { items: next } = await fetchInternships({
         type: options.kind,

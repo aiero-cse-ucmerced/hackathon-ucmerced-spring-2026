@@ -200,15 +200,21 @@ export default function DashboardPage() {
               </div>
             ) : internships.length === 0 ? (
               <div className="rounded-xl bg-zinc-50 px-4 py-6 text-sm text-zinc-600">
-                No matches yet. Try lowering the minimum score or adding more
-                interests in your{" "}
-                <Link
-                  href="/dashboard/profile"
-                  className="font-medium text-zinc-900 underline underline-offset-2"
-                >
-                  profile
-                </Link>
-                .
+                {!online ? (
+                  <>Connect to the internet to load your matched internships.</>
+                ) : (
+                  <>
+                    No matches yet. Try lowering the minimum score or adding more
+                    interests in your{" "}
+                    <Link
+                      href="/dashboard/profile"
+                      className="font-medium text-zinc-900 underline underline-offset-2"
+                    >
+                      profile
+                    </Link>
+                    .
+                  </>
+                )}
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
