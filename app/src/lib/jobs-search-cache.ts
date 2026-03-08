@@ -12,6 +12,10 @@ export function setJobsSearchCache(items: MatchedListing[]): void {
   cache = items;
 }
 
+export function getJobsSearchCache(): MatchedListing[] {
+  return cache;
+}
+
 export function getJobsSearchListing(id: string): MatchedListing | undefined {
   return cache.find((item) => item.id === id);
 }

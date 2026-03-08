@@ -146,6 +146,7 @@ export default function ProfilePage() {
           name: draft.name,
           email: draft.email,
           major: draft.major,
+          age: draft.age,
           avatarUrl: draft.avatarUrl ?? null,
           interests: draft.interests,
           strengths: draft.strengths,

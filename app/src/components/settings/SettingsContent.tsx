@@ -101,7 +101,7 @@ export function SettingsContent() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const token = typeof window !== "undefined" ? getStoredToken() : null;
-  const hasAccountApi = env.useSelfHostedApi && token;
+  const hasAccountApi = (env.useSelfHostedApi || env.useWorkersApi) && token;
 
   const [email, setEmail] = useState("");
   const [emailFormOpen, setEmailFormOpen] = useState(false);

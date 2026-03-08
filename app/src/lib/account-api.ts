@@ -1,5 +1,6 @@
 /**
- * Self-hosted account API client (change email, password, sign out).
+ * Account API client (change email, password, sign out).
+ * Uses self-hosted API when configured, otherwise Workers API.
  * Requires the user's API key (token from Worker auth) as Bearer.
  */
 
@@ -15,6 +16,13 @@ function authHeaders(token: string): Record<string, string> {
     ...JSON_HEADERS,
     Authorization: `Bearer ${token}`,
   };
+}
+
+/** Base URL for account endpoints: self-hosted if set, else Workers API. */
+function getAccountApiBase(): string {
+  if (env.useSelfHostedApi) return env.selfHostedApiUrl;
+  if (env.useWorkersApi) return env.workersApiUrl;
+  return "";
 }
 
 export interface AccountApiError {
@@ -36,7 +44,9 @@ async function checkRes(res: Response): Promise<void> {
 
 /** PATCH /api/account/email – update email (users + profile). */
 export async function updateEmail(token: string, newEmail: string): Promise<void> {
-  const url = `${env.selfHostedApiUrl}/api/account/email`;
+  const base = getAccountApiBase();
+  if (!base) throw new Error("No account API configured");
+  const url = `${base}/api/account/email`;
   const res = await fetch(url, {
     method: "PATCH",
     headers: authHeaders(token),
@@ -51,7 +61,9 @@ export async function updatePassword(
   currentPassword: string,
   newPassword: string
 ): Promise<void> {
-  const url = `${env.selfHostedApiUrl}/api/account/password`;
+  const base = getAccountApiBase();
+  if (!base) throw new Error("No account API configured");
+  const url = `${base}/api/account/password`;
   const res = await fetch(url, {
     method: "PATCH",
     headers: authHeaders(token),
@@ -65,7 +77,9 @@ export async function updatePassword(
 
 /** POST /api/account/signout – server acknowledges; client must clear token. */
 export async function signOutApi(token: string): Promise<void> {
-  const url = `${env.selfHostedApiUrl}/api/account/signout`;
+  const base = getAccountApiBase();
+  if (!base) throw new Error("No account API configured");
+  const url = `${base}/api/account/signout`;
   const res = await fetch(url, {
     method: "POST",
     headers: authHeaders(token),

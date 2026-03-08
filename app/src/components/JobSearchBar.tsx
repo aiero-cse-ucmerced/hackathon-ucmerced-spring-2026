@@ -94,23 +94,20 @@ export function JobSearchBar({
 
   const filteredSuggestions = useMemo(() => {
     const q = keywords.trim().toLowerCase();
-    if (q.length === 0) return [];
+    if (q.length === 0) {
+      return JOB_SUGGESTIONS.slice(0, MAX_SUGGESTIONS);
+    }
     return JOB_SUGGESTIONS.filter((s) =>
       s.toLowerCase().includes(q),
     ).slice(0, MAX_SUGGESTIONS);
   }, [keywords]);
 
-  const showDropdown =
-    dropdownOpen &&
-    keywords.trim().length >= 1 &&
-    filteredSuggestions.length > 0;
+  const showDropdown = dropdownOpen && filteredSuggestions.length > 0;
 
   const openDropdown = useCallback(() => {
-    if (keywords.trim().length >= 1 && filteredSuggestions.length > 0) {
-      setDropdownOpen(true);
-      setHighlightedIndex(0);
-    }
-  }, [keywords, filteredSuggestions.length]);
+    setDropdownOpen(true);
+    setHighlightedIndex(0);
+  }, []);
 
   const closeDropdown = useCallback(() => {
     setDropdownOpen(false);
@@ -157,11 +154,7 @@ export function JobSearchBar({
 
   const handleKeywordsChange = (value: string) => {
     onKeywordsChange(value);
-    if (value.trim().length >= 1) {
-      setDropdownOpen(true);
-    } else {
-      setDropdownOpen(false);
-    }
+    setDropdownOpen(true);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

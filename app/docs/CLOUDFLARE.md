@@ -47,7 +47,8 @@ OpenNext runs the repo’s `build` script internally (e.g. `npm run build` → N
 
 The frontend calls the Worker for:
 
-- **GET/PATCH** `/api/profile` — Bearer token required.
+- **GET/PATCH** `/api/profile` — Bearer token required. Profile & preferences (name, email, major, age, interests, strengths, pastExperiences, etc.) are persisted via REST API.
+- **PATCH** `/api/account/email`, **PATCH** `/api/account/password`, **POST** `/api/account/signout` — Account settings (also available from self-hosted when configured).
 - **POST** `/api/profile/avatar` — Multipart upload; Bearer required.
 - **GET** `/api/social-events?lat=&lng=&age=&radius=` — Eventbrite + Gemini personalization.
 - **GET** `/api/geocode?q=...` or `?lat=&lng=` — Nominatim proxy with KV cache.

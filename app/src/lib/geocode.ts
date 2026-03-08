@@ -1,10 +1,9 @@
 /**
  * OpenStreetMap Nominatim – geocode and reverse geocode for social networking location preview.
- * Respect Nominatim usage policy: one request per second, identifiable User-Agent.
+ * Uses Worker proxy when configured (KV cache), else Next.js API route. Both avoid CORS.
  */
 
-const NOMINATIM_BASE = "https://nominatim.openstreetmap.org";
-const USER_AGENT = "UncookedAura/1.0 (https://github.com/uncookedaura; contact@example.com)";
+import { env } from "./env";
 
 export interface GeocodeResult {
   place_id: number;
@@ -23,27 +22,38 @@ export interface ReverseGeocodeResult {
   address?: Record<string, string>;
 }
 
+function buildGeocodeUrl(mode: "search" | "reverse", params: Record<string, string>): string {
+  const base = env.useWorkersApi ? env.workersApiUrl : "";
+  const search = new URLSearchParams(params).toString();
+  return base
+    ? `${base}/api/geocode?${search}`
+    : `/api/geocode?${search}`;
+}
+
 /**
  * Geocode: address/city/ZIP → lat, lon, display_name.
  */
 export async function geocode(query: string): Promise<GeocodeResult[]> {
-  const url = `${NOMINATIM_BASE}/search?format=json&q=${encodeURIComponent(query)}&limit=5`;
-  const res = await fetch(url, {
-    headers: { "User-Agent": USER_AGENT },
-  });
-  if (!res.ok) throw new Error("Geocode failed");
+  const url = buildGeocodeUrl("search", { q: query });
+  const headers: Record<string, string> = {};
+  if (env.apiKey) headers["X-API-Key"] = env.apiKey;
+  const res = await fetch(url, { headers });
+  if (!res.ok) {
+    const err = (await res.json()).catch(() => ({})) as { error?: string };
+    throw new Error(err.error ?? "Geocode failed");
+  }
   const data = (await res.json()) as GeocodeResult[];
-  return data;
+  return Array.isArray(data) ? data : [];
 }
 
 /**
  * Reverse geocode: lat, lon → display name / address for preview.
  */
 export async function reverseGeocode(lat: number, lon: number): Promise<ReverseGeocodeResult | null> {
-  const url = `${NOMINATIM_BASE}/reverse?format=json&lat=${lat}&lon=${lon}`;
-  const res = await fetch(url, {
-    headers: { "User-Agent": USER_AGENT },
-  });
+  const url = buildGeocodeUrl("reverse", { lat: String(lat), lon: String(lon) });
+  const headers: Record<string, string> = {};
+  if (env.apiKey) headers["X-API-Key"] = env.apiKey;
+  const res = await fetch(url, { headers });
   if (!res.ok) return null;
   const data = (await res.json()) as ReverseGeocodeResult;
   return data;

@@ -9,7 +9,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { useProfile } from "@/lib/use-profile";
 import { fetchInternships } from "@/lib/internships-api";
 import type { MatchedListing } from "@/lib/internships-api";
-import { setJobsSearchCache } from "@/lib/jobs-search-cache";
+import { getJobsSearchCache, setJobsSearchCache } from "@/lib/jobs-search-cache";
 
 const DEFAULT_LOCATION = "Merced, CA";
 
@@ -19,7 +19,7 @@ export default function JobsPage() {
   const [keywords, setKeywords] = useState("");
   const [location, setLocation] = useState(DEFAULT_LOCATION);
   const [items, setItems] = useState<MatchedListing[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [searched, setSearched] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -29,17 +29,23 @@ export default function JobsPage() {
     setLoading(true);
     setSearched(true);
     try {
+      const interests = profile?.interests ?? [];
+      const strengths = profile?.strengths ?? [];
       const [internshipRes, entryRes] = await Promise.all([
         fetchInternships({
           type: "internship",
-          interests: [],
+          interests,
+          strengths,
+          major: profile?.major,
           minScore: 1,
           keywords: keywords.trim() || undefined,
           location: location.trim() || undefined,
         }),
         fetchInternships({
           type: "entry-level",
-          interests: [],
+          interests,
+          strengths,
+          major: profile?.major,
           minScore: 1,
           keywords: keywords.trim() || undefined,
           location: location.trim() || undefined,
@@ -51,7 +57,19 @@ export default function JobsPage() {
     } finally {
       setLoading(false);
     }
-  }, [keywords, location]);
+  }, [keywords, location, profile?.interests, profile?.strengths, profile?.major]);
+
+  useEffect(() => {
+    const cached = getJobsSearchCache();
+    if (cached.length > 0) {
+      setItems(cached);
+      setSearched(true);
+      setLoading(false);
+    } else {
+      runSearch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: run once on mount
+  }, []);
 
   const savedIds = profile?.savedIds ?? [];
   const completedIds = profile?.completedIds ?? [];

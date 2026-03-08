@@ -144,6 +144,7 @@ export async function patchProfile(
       | "name"
       | "email"
       | "major"
+      | "age"
       | "avatarUrl"
       | "interests"
       | "strengths"
@@ -159,6 +160,7 @@ export async function patchProfile(
     interests: payload.interests ?? [],
     strengths: payload.strengths ?? [],
     pastExperiences: payload.pastExperiences ?? [],
+    age: payload.age,
   };
 
   let merged: UserProfile;
@@ -171,6 +173,7 @@ export async function patchProfile(
       name: payload.name ?? existing?.name,
       email: payload.email ?? existing?.email,
       major: payload.major ?? existing?.major,
+      age: payload.age !== undefined ? payload.age : existing?.age,
       avatarUrl: payload.avatarUrl !== undefined ? payload.avatarUrl : existing?.avatarUrl,
       interests: payload.interests ?? existing?.interests ?? [],
       strengths: payload.strengths ?? existing?.strengths ?? [],
@@ -254,6 +257,8 @@ export async function syncProfileWhenOnline(
           name: local.name,
           email: local.email,
           major: local.major,
+          age: local.age,
+          avatarUrl: local.avatarUrl ?? null,
           interests: local.interests,
           strengths: local.strengths,
           pastExperiences: local.pastExperiences,
