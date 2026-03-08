@@ -14,7 +14,7 @@
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "uncookedaura"
+      "service": "hackathon-ucmerced-spring-2026"
     }
   ],
   // Uncomment r2_buckets after: npx wrangler r2 bucket create uncookedaura-cache
