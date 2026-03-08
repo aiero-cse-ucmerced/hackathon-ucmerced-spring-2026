@@ -25,16 +25,22 @@ For local Cloudflare preview, copy `.dev.vars.example` to `.dev.vars` and set `N
 
 ## Deploy this frontend to Cloudflare
 
-**Build command:** In Cloudflare Pages, set the build command to **`yarn build:cloudflare`** (or `npm run build:cloudflare`). That runs the OpenNext adapter, which internally runs `yarn build` (Next.js) then produces `.open-next/worker.js`. Do **not** use `yarn build` as the Cloudflare build command—that would only run Next.js and skip the OpenNext step; OpenNext itself must be the entry point so it can invoke `next build` once.
+**Public deployments (Cloudflare Build):** Use **npm** so the build command and internal OpenNext step stay consistent.
 
-1. Install deps: `yarn` (or `npm install`).
+- **Build command:** `npm run build:cloudflare`
+- **Deploy command:** `npx wrangler deploy`
+
+OpenNext runs the repo’s `build` script internally (e.g. `npm run build` → Next.js). Use **Root directory** `app` if the app lives in the `app` folder.
+
+**Local / CLI:**
+1. Install deps: `npm install` (or `yarn`).
 2. Log in: `npx wrangler login`.
 3. (Optional) Create R2 bucket for Next.js cache and uncomment `r2_buckets` in `wrangler.jsonc`:
    ```bash
    npx wrangler r2 bucket create uncookedaura-cache
    ```
-4. Preview locally in Workers runtime: `yarn preview`.
-5. Deploy: `yarn deploy`.
+4. Preview locally in Workers runtime: `npm run preview`.
+5. Deploy from CLI: `npm run deploy`.
 
 ## Workers API contract
 
