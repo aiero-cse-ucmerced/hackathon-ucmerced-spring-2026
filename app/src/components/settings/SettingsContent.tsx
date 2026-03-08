@@ -85,14 +85,7 @@ export function SettingsContent() {
   const [emailFormOpen, setEmailFormOpen] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [passwordFormOpen, setPasswordFormOpen] = useState(false);
-  const [accountProtection, setAccountProtection] = useState(false);
   const [passkeys, setPasskeys] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [emailPrefs, setEmailPrefs] = useState({
-    marketing: false,
-    productUpdates: true,
-    internshipMatches: true,
-  });
   const [status, setStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -275,36 +268,19 @@ export function SettingsContent() {
           {/* Security */}
           <SettingsSection
             title="Security settings"
-            description="Protect your account with additional security options."
+            description="Manage sign-in and security options."
           >
-            <SettingsRow
-              label="Account protection"
-              description="Require additional verification for sensitive actions."
-              action={
-                <Toggle
-                  checked={accountProtection}
-                  onChange={setAccountProtection}
-                />
-              }
-            />
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 text-sm text-zinc-600">
+              <p>
+                We recommend using <strong>Google OAuth</strong> for signing in.
+                It is more secure and convenient than email and password.
+              </p>
+            </div>
             <SettingsRow
               label="Passkeys"
               description="Use passkeys for passwordless sign-in."
               action={
                 <Toggle checked={passkeys} onChange={setPasskeys} />
-              }
-            />
-            <SettingsRow
-              label="Phone number"
-              description="Add a phone number for recovery and 2FA."
-              action={
-                <input
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="+1 (555) 000-0000"
-                  className="w-48 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-                />
               }
             />
           </SettingsSection>
@@ -329,53 +305,6 @@ export function SettingsContent() {
                 companies, and your rights.
               </p>
             </div>
-            <SettingsRow
-              label="Email preferences"
-              description="Choose which emails you receive from UncookedAura."
-              action={
-                <div className="flex flex-col gap-3">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={emailPrefs.marketing}
-                      onChange={(e) =>
-                        setEmailPrefs((p) => ({ ...p, marketing: e.target.checked }))
-                      }
-                      className="h-4 w-4 rounded border-zinc-300"
-                    />
-                    <span className="text-sm">Marketing and tips</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={emailPrefs.productUpdates}
-                      onChange={(e) =>
-                        setEmailPrefs((p) => ({
-                          ...p,
-                          productUpdates: e.target.checked,
-                        }))
-                      }
-                      className="h-4 w-4 rounded border-zinc-300"
-                    />
-                    <span className="text-sm">Product updates</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={emailPrefs.internshipMatches}
-                      onChange={(e) =>
-                        setEmailPrefs((p) => ({
-                          ...p,
-                          internshipMatches: e.target.checked,
-                        }))
-                      }
-                      className="h-4 w-4 rounded border-zinc-300"
-                    />
-                    <span className="text-sm">Internship matches</span>
-                  </label>
-                </div>
-              }
-            />
             <SettingsRow
               label="Download your data"
               description="Export a copy of your profile and activity data."

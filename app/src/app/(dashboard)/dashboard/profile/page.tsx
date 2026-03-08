@@ -18,6 +18,7 @@ import {
   patchProfile,
   WORKING_FIELD_INTERESTS,
   STRENGTH_OPTIONS,
+  MAJOR_OPTIONS,
   type UserProfile,
 } from "@/lib/internships-api";
 import { getStoredToken } from "@/lib/auth";
@@ -32,10 +33,11 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
-  const [draft, setDraft] = useState<UserProfile>({
+  const [draft, setDraft] = useState<UserProfile & { majors: string[] }>({
     interests: [],
     strengths: [],
     pastExperiences: [],
+    majors: [],
   });
 
   const loadProfile = useCallback(async () => {
@@ -43,6 +45,9 @@ export default function ProfilePage() {
     const p = await getProfile(token ?? undefined);
     setProfile(p);
     if (p) {
+      const majors = p.major
+        ? p.major.split(/,\s*/).filter(Boolean)
+        : [];
       setDraft({
         name: p.name,
         email: p.email,
@@ -50,8 +55,12 @@ export default function ProfilePage() {
         interests: p.interests ?? [],
         strengths: p.strengths ?? [],
         pastExperiences: p.pastExperiences ?? [],
+        majors,
       });
     } else if (user) {
+      const majors = user.major
+        ? user.major.split(/,\s*/).filter(Boolean)
+        : [];
       setDraft({
         name: user.name,
         email: user.email,
@@ -59,6 +68,7 @@ export default function ProfilePage() {
         interests: [],
         strengths: [],
         pastExperiences: [],
+        majors,
       });
     }
   }, [user]);
@@ -97,6 +107,18 @@ export default function ProfilePage() {
     });
   }, []);
 
+  const toggleMajor = useCallback((value: string) => {
+    setDraft((current) => {
+      const exists = current.majors.includes(value);
+      return {
+        ...current,
+        majors: exists
+          ? current.majors.filter((x) => x !== value)
+          : [...current.majors, value],
+      };
+    });
+  }, []);
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
@@ -107,7 +129,7 @@ export default function ProfilePage() {
         {
           name: draft.name,
           email: draft.email,
-          major: draft.major,
+          major: draft.majors.length > 0 ? draft.majors.join(", ") : undefined,
           interests: draft.interests,
           strengths: draft.strengths,
           pastExperiences: draft.pastExperiences,
@@ -153,16 +175,30 @@ export default function ProfilePage() {
                 required
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="major">Major</Label>
-              <Input
-                id="major"
-                value={draft.major ?? ""}
-                onChange={(e) =>
-                  setDraft((c) => ({ ...c, major: e.target.value }))
-                }
-                placeholder="e.g. CSE, CS, Applied Math"
-              />
+            <div className="space-y-2 md:col-span-2">
+              <Label>Major</Label>
+              <p className="text-sm text-zinc-600">
+                Select one or more majors.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {MAJOR_OPTIONS.map((label) => {
+                  const active = draft.majors.includes(label);
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => toggleMajor(label)}
+                      className={`rounded-full border px-3 py-1 text-sm ${
+                        active
+                          ? "border-zinc-900 bg-zinc-900 text-white"
+                          : "border-zinc-300 bg-white text-zinc-800 hover:border-zinc-400"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

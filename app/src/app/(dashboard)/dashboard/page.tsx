@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { MatchedInternshipCard } from "@/components/MatchedInternshipCard";
 import { InternshipCardSkeleton } from "@/components/skeleton/InternshipCardSkeleton";
@@ -12,6 +13,7 @@ const SCORE_OPTIONS = [50, 60, 70, 80];
 const ENTRY_UNLOCK_THRESHOLD = 3;
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const { profile, save, loading } = useProfile();
 
@@ -60,7 +62,7 @@ export default function DashboardPage() {
       <section className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 md:text-3xl">
-            Welcome back, {user.name || "student"}
+            Welcome back, {profile?.name ?? user.name ?? "student"}
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-600">
             Explore internships that line up with your interests and use them to
@@ -147,12 +149,13 @@ export default function DashboardPage() {
           <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-600">
             No matches yet. Try lowering the minimum score or adding more
             interests in your{" "}
-            <Link
-              href="/dashboard/profile"
-              className="font-medium text-zinc-900 underline underline-offset-2"
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard/profile")}
+              className="font-medium text-zinc-900 underline underline-offset-2 hover:no-underline"
             >
               profile
-            </Link>
+            </button>
             .
           </div>
         ) : (

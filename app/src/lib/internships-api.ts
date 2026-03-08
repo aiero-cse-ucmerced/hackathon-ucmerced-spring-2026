@@ -39,6 +39,18 @@ export const WORKING_FIELD_INTERESTS = [
 
 export type WorkingFieldInterest = (typeof WORKING_FIELD_INTERESTS)[number];
 
+export const MAJOR_OPTIONS = [
+  "CSE",
+  "CS",
+  "Applied Math",
+  "Engineering",
+  "Data Science",
+  "Business",
+  "Others",
+] as const;
+
+export type MajorOption = (typeof MAJOR_OPTIONS)[number];
+
 export const STRENGTH_OPTIONS = [
   "Problem solving",
   "Communication",
@@ -56,6 +68,7 @@ export const STRENGTH_OPTIONS = [
 
 const PROFILE_STORAGE_KEY = "uncookedaura_profile";
 const ONBOARDING_DONE_KEY = "uncookedaura_onboarding_done";
+const PENDING_SYNC_KEY = "uncookedaura_profile_pending_sync";
 
 function buildHeaders(token?: string): Record<string, string> {
   const headers: Record<string, string> = {
@@ -68,49 +81,60 @@ function buildHeaders(token?: string): Record<string, string> {
 }
 
 /**
- * Fetches user profile from Workers API. Falls back to localStorage when API is unavailable.
+ * Reads profile from localStorage only (sync, for offline-first).
  */
-export async function getProfile(token?: string): Promise<UserProfile | null> {
-  if (env.useWorkersApi && token) {
-    try {
-      const url = `${env.workersApiUrl}/api/profile`;
-      const res = await fetch(url, { method: "GET", headers: buildHeaders(token) });
-      if (res.ok) {
-        const data = (await res.json()) as UserProfile;
-        return {
-          ...data,
-          interests: data.interests ?? [],
-          strengths: data.strengths ?? [],
-          pastExperiences: data.pastExperiences ?? [],
-        };
-      }
-    } catch (e) {
-      console.warn("[UncookedAura] getProfile failed:", e);
+function getLocalProfile(): UserProfile | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw) as UserProfile;
+      return {
+        ...data,
+        interests: data.interests ?? [],
+        strengths: data.strengths ?? [],
+        pastExperiences: data.pastExperiences ?? [],
+      };
     }
-  }
-
-  if (typeof window !== "undefined") {
-    try {
-      const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
-      if (raw) {
-        const data = JSON.parse(raw) as UserProfile;
-        return {
-          ...data,
-          interests: data.interests ?? [],
-          strengths: data.strengths ?? [],
-          pastExperiences: data.pastExperiences ?? [],
-        };
-      }
-    } catch {
-      // ignore
-    }
+  } catch {
+    // ignore
   }
   return null;
 }
 
 /**
- * Updates user profile (onboarding or profile edit). Persists to Workers when available, else localStorage.
- * Accepts name, email, major to seed from auth when completing onboarding.
+ * Fetches user profile. Offline-first: always returns localStorage data immediately when available.
+ * When online, syncs from API and updates localStorage.
+ */
+export async function getProfile(token?: string): Promise<UserProfile | null> {
+  const local = getLocalProfile();
+
+  if (typeof window !== "undefined" && env.useWorkersApi && token && navigator.onLine) {
+    try {
+      const url = `${env.workersApiUrl}/api/profile`;
+      const res = await fetch(url, { method: "GET", headers: buildHeaders(token) });
+      if (res.ok) {
+        const data = (await res.json()) as UserProfile;
+        const profile: UserProfile = {
+          ...data,
+          interests: data.interests ?? [],
+          strengths: data.strengths ?? [],
+          pastExperiences: data.pastExperiences ?? [],
+        };
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+        return profile;
+      }
+    } catch (e) {
+      console.warn("[UncookedAura] getProfile API failed:", e);
+    }
+  }
+
+  return local;
+}
+
+/**
+ * Updates user profile. Offline-first: always saves to localStorage immediately.
+ * When online, syncs to Workers API.
  */
 export async function patchProfile(
   payload: Partial<
@@ -135,26 +159,11 @@ export async function patchProfile(
     pastExperiences: payload.pastExperiences ?? [],
   };
 
-  if (env.useWorkersApi && token) {
-    try {
-      const url = `${env.workersApiUrl}/api/profile`;
-      const res = await fetch(url, {
-        method: "PATCH",
-        headers: buildHeaders(token),
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
-        const data = (await res.json()) as UserProfile;
-        return { ...next, ...data };
-      }
-    } catch (e) {
-      console.warn("[UncookedAura] patchProfile failed:", e);
-    }
-  }
+  let merged: UserProfile;
 
   if (typeof window !== "undefined") {
-    const existing = await getProfile(token);
-    const merged: UserProfile = {
+    const existing = getLocalProfile();
+    merged = {
       ...existing,
       ...next,
       name: payload.name ?? existing?.name,
@@ -169,10 +178,42 @@ export async function patchProfile(
     };
     localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(merged));
     setOnboardingComplete();
-    return merged;
+  } else {
+    merged = {
+      ...next,
+      interests: next.interests,
+      strengths: next.strengths,
+      pastExperiences: next.pastExperiences,
+    };
   }
 
-  return next;
+  if (typeof window !== "undefined" && env.useWorkersApi && token && navigator.onLine) {
+    try {
+      const url = `${env.workersApiUrl}/api/profile`;
+      const res = await fetch(url, {
+        method: "PATCH",
+        headers: buildHeaders(token),
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as UserProfile;
+        const synced: UserProfile = {
+          ...data,
+          interests: data.interests ?? [],
+          strengths: data.strengths ?? [],
+          pastExperiences: data.pastExperiences ?? [],
+        };
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(synced));
+        localStorage.removeItem(PENDING_SYNC_KEY);
+        return synced;
+      }
+    } catch (e) {
+      console.warn("[UncookedAura] patchProfile API failed:", e);
+      localStorage.setItem(PENDING_SYNC_KEY, "true");
+    }
+  }
+
+  return merged;
 }
 
 export function isOnboardingComplete(): boolean {
@@ -190,7 +231,39 @@ export function clearOnboardingState(): void {
   if (typeof window !== "undefined") {
     localStorage.removeItem(ONBOARDING_DONE_KEY);
     localStorage.removeItem(PROFILE_STORAGE_KEY);
+    localStorage.removeItem(PENDING_SYNC_KEY);
   }
+}
+
+/**
+ * Syncs local profile to API when coming back online. Pushes offline changes, then refreshes from server.
+ */
+export async function syncProfileWhenOnline(
+  token: string | undefined,
+  onSynced?: (profile: UserProfile | null) => void
+): Promise<void> {
+  if (typeof window === "undefined" || !navigator.onLine || !token) return;
+  if (localStorage.getItem(PENDING_SYNC_KEY)) {
+    const local = getLocalProfile();
+    if (local) {
+      await patchProfile(
+        {
+          name: local.name,
+          email: local.email,
+          major: local.major,
+          interests: local.interests,
+          strengths: local.strengths,
+          pastExperiences: local.pastExperiences,
+          completedIds: local.completedIds,
+          savedIds: local.savedIds,
+          minScore: local.minScore,
+        },
+        token
+      );
+    }
+  }
+  const p = await getProfile(token);
+  onSynced?.(p ?? null);
 }
 
 export type InternshipKind = "internship" | "entry-level";
