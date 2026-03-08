@@ -9,7 +9,7 @@ export function LandingHeader() {
   const { user, loading } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-100/60 bg-white/80 px-6 py-5 shadow-sm shadow-zinc-900/5 backdrop-blur-xl">
+    <header className="landing-header sticky top-0 z-40 border-b border-zinc-100/60 bg-white/80 px-6 py-5 shadow-sm shadow-zinc-900/5 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <Logo />
         <nav className="flex items-center gap-4">

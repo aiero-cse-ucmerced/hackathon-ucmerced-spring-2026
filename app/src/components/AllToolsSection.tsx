@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { useInView } from "@/lib/use-in-view";
 
 const BANNER_LOGOS: { filename: string; name: string }[] = [
   { filename: "Pinterest_logo.png", name: "Pinterest" },
@@ -22,7 +16,6 @@ const BANNER_LOGOS: { filename: string; name: string }[] = [
 function BrandLogo({ logo }: { logo: { filename: string; name: string } }) {
   const [failed, setFailed] = useState(false);
   const src = `/logos/${logo.filename}`;
-
   const onError = useCallback(() => setFailed(true), []);
 
   if (failed) {
@@ -37,16 +30,69 @@ function BrandLogo({ logo }: { logo: { filename: string; name: string } }) {
     <img
       src={src}
       alt={logo.name}
-      className="h-[3.75em] w-auto object-contain"
+      className="h-[3.75em] w-auto object-contain opacity-70 transition-opacity hover:opacity-100"
       onError={onError}
     />
   );
 }
 
+/** Wrapper that reveals content when scrolled into view */
+function ScrollReveal({
+  children,
+  className = "",
+  variant = "up",
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  variant?: "up" | "scale";
+  delay?: number;
+}) {
+  const { ref, inView } = useInView({ threshold: 0.12, rootMargin: "0px 0px -60px 0px" });
+  const baseClass = variant === "scale" ? "scroll-reveal-scale" : "scroll-reveal";
+  const style = delay > 0 ? { transitionDelay: inView ? `${delay}ms` : "0ms" } : undefined;
+  return (
+    <div
+      ref={ref}
+      className={`${baseClass} ${inView ? "is-visible" : ""} ${className}`}
+      style={style}
+    >
+      {children}
+    </div>
+  );
+}
+
+const VALUE_CARDS = [
+  {
+    problem: "You apply to dozens of jobs without knowing if you're a fit.",
+    solution: "See a fit score for every listing—before you apply.",
+    image: "/landing_feature_pngs/internship.png",
+    imageAlt: "Matched internships with fit scores",
+  },
+  {
+    problem: "Job boards filter by keywords. Your potential gets ignored.",
+    solution: "We match by interests and strengths—not just past job titles.",
+    image: "/landing_feature_pngs/profile.png",
+    imageAlt: "Profile and interests",
+  },
+  {
+    problem: "No experience? Most listings reject you before you start.",
+    solution: "We surface roles for students. No prior experience required.",
+    image: "/landing_feature_pngs/internship.png",
+    imageAlt: "Internship opportunities",
+  },
+  {
+    problem: "Applications get lost. You lose track of what you've applied to.",
+    solution: "Save for later. Mark as completed. Unlock more entries as you go.",
+    image: "/landing_feature_pngs/save.png",
+    imageAlt: "Save and track applications",
+  },
+];
+
 export function AllToolsSection() {
   return (
     <>
-      {/* Brand logos — social proof: companies students land at */}
+      {/* Brand logos — social proof */}
       <section className="border-t border-zinc-100 bg-white py-14 text-sm">
         <p className="mx-auto mb-8 max-w-2xl text-center text-xs uppercase tracking-wider text-zinc-400 md:text-sm">
           Roles at companies like these
@@ -58,127 +104,70 @@ export function AllToolsSection() {
         </div>
       </section>
 
-      {/* All the tools that you need - headline, description, browser mockup */}
-      <section className="relative overflow-hidden bg-zinc-100 px-6 py-20 md:py-28">
-        {/* Decorative: orange + and dots, yellow blob from right */}
+      {/* Why you need this — value-focused, scroll-animated */}
+      <section className="relative overflow-hidden bg-zinc-100 px-6 py-24 md:py-32">
         <div
-          className="pointer-events-none absolute -right-32 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-amber-300/50 blur-3xl"
+          className="pointer-events-none absolute -right-40 top-1/2 h-[500px] w-[500px] -translate-y-1/2 rounded-full bg-amber-300/30 blur-3xl"
           aria-hidden
         />
-        <span className="absolute left-[10%] top-[28%] text-lg text-amber-500/60" aria-hidden>+</span>
-        <span className="absolute left-[14%] top-[58%] block h-1.5 w-1.5 rounded-full bg-amber-500/50" aria-hidden />
-        <span className="absolute right-[22%] top-[22%] text-amber-500/50" aria-hidden>+</span>
-        <span className="absolute right-[28%] top-[68%] block h-2 w-2 rounded-full bg-amber-500/40" aria-hidden />
-        <span className="absolute bottom-[28%] left-[18%] block h-1 w-1 rounded-full bg-amber-500/40" aria-hidden />
 
-        <div className="relative mx-auto max-w-3xl text-center">
-          <h2
-            className="text-3xl font-bold tracking-tight text-zinc-900 md:text-4xl"
-            style={{ fontFamily: "var(--font-syne), var(--font-poppins), sans-serif" }}
-          >
-            All the tools{" "}
-            <span className="relative inline-block">
-              <span className="relative z-10">that</span>
-              <span
-                className="absolute bottom-0 left-0 right-0 h-1 bg-amber-500"
-                aria-hidden
-              />
-            </span>{" "}
-            you need
-          </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-700 md:text-lg">
-            Match to internships and entry-level roles using your interests and
-            strengths, not just past job titles. See a fit score for every
-            listing and filter by minimum match.
-          </p>
+        <div className="relative mx-auto max-w-4xl">
+          {/* Section headline */}
+          <ScrollReveal variant="scale" className="text-center">
+            <h2
+              className="text-3xl font-bold tracking-tight text-zinc-900 md:text-4xl"
+              style={{ fontFamily: "var(--font-syne), var(--font-poppins), sans-serif" }}
+            >
+              Why you need this
+            </h2>
+            <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-600 md:text-lg">
+              Stop applying blindly. Start applying smart.
+            </p>
+          </ScrollReveal>
 
-          <div className="mt-14 flex justify-center">
-            <div className="w-full max-w-4xl overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl">
-              <div className="flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-4 py-3">
-                <div className="flex gap-1.5">
-                  <span className="h-3 w-3 rounded-full bg-red-400" />
-                  <span className="h-3 w-3 rounded-full bg-amber-400" />
-                  <span className="h-3 w-3 rounded-full bg-emerald-400" />
-                </div>
-                <span className="text-sm text-zinc-500">app.uncookedaura.com</span>
-                <div className="flex gap-1 text-zinc-400">
-                  <span aria-hidden>‹</span>
-                  <span aria-hidden>›</span>
-                </div>
-              </div>
-              <div
-                className="relative aspect-video w-full overflow-hidden"
-                aria-label="Feature overview"
+          {/* Value cards — alternating layout, scroll-reveal */}
+          <div className="mt-20 space-y-24 md:space-y-32">
+            {VALUE_CARDS.map((card, i) => (
+              <ScrollReveal
+                key={i}
+                delay={i * 80}
+                className={`flex flex-col gap-8 md:gap-12 ${
+                  i % 2 === 1 ? "md:flex-row-reverse" : "md:flex-row"
+                } md:items-center`}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-100/80 via-amber-50/60 to-zinc-100" />
-                <Carousel
-                  opts={{ loop: true }}
-                  className="absolute inset-0 flex items-center justify-center"
+                <div className="flex-1 md:pr-12 md:pl-0">
+                  <p className="text-sm font-medium italic text-zinc-500">{card.problem}</p>
+                  <p
+                    className="mt-4 text-xl font-semibold leading-snug text-zinc-900 md:text-2xl"
+                    style={{ fontFamily: "var(--font-syne), var(--font-poppins), sans-serif" }}
+                  >
+                    {card.solution}
+                  </p>
+                </div>
+                <div
+                  className={`relative flex flex-1 justify-center ${
+                    i % 2 === 1 ? "md:justify-start" : "md:justify-end"
+                  }`}
                 >
-                  <CarouselContent className="ml-0 h-full w-full">
-                    <CarouselItem className="flex items-center justify-center pl-0">
-                      <div className="flex flex-col items-center justify-center gap-3 md:gap-4">
-                        <h3 className="text-[1.5rem] font-semibold text-zinc-800 md:text-[1.75rem]">
-                          Matched internships
-                        </h3>
-                        <div className="rounded-lg bg-white px-4 py-2">
-                          <img
-                            src="/landing_feature_pngs/internship.png"
-                            alt="Matched internships"
-                            className="h-40 w-auto object-contain md:h-52"
-                          />
-                        </div>
-                      </div>
-                    </CarouselItem>
-                    <CarouselItem className="flex items-center justify-center pl-0">
-                      <div className="flex flex-col items-center justify-center gap-3 md:gap-4">
-                        <h3 className="text-[1.5rem] font-semibold text-zinc-800 md:text-[1.75rem]">
-                          Save for later
-                        </h3>
-                        <div className="rounded-lg bg-white px-4 py-2">
-                          <img
-                            src="/landing_feature_pngs/save.png"
-                            alt="Save for later"
-                            className="h-40 w-auto object-contain md:h-52"
-                          />
-                        </div>
-                      </div>
-                    </CarouselItem>
-                    <CarouselItem className="flex items-center justify-center pl-0">
-                      <div className="flex flex-col items-center justify-center gap-3 md:gap-4">
-                        <h3 className="text-[1.5rem] font-semibold text-zinc-800 md:text-[1.75rem]">
-                          Search by keyword
-                        </h3>
-                        <div className="rounded-lg bg-white px-4 py-2">
-                          <img
-                            src="/landing_feature_pngs/search.png"
-                            alt="Search by keyword"
-                            className="h-40 w-auto object-contain md:h-52"
-                          />
-                        </div>
-                      </div>
-                    </CarouselItem>
-                    <CarouselItem className="flex items-center justify-center pl-0">
-                      <div className="flex flex-col items-center justify-center gap-3 md:gap-4">
-                        <h3 className="text-[1.5rem] font-semibold text-zinc-800 md:text-[1.75rem]">
-                          Profile & strengths
-                        </h3>
-                        <div className="rounded-lg bg-white px-4 py-2">
-                          <img
-                            src="/landing_feature_pngs/profile.png"
-                            alt="Profile & strengths"
-                            className="h-40 w-auto object-contain md:h-52"
-                          />
-                        </div>
-                      </div>
-                    </CarouselItem>
-                  </CarouselContent>
-                  <CarouselPrevious className="left-2 border-zinc-300 bg-white/90 hover:bg-white md:left-4" />
-                  <CarouselNext className="right-2 border-zinc-300 bg-white/90 hover:bg-white md:right-4" />
-                </Carousel>
-              </div>
-            </div>
+                  <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-xl shadow-zinc-900/10 md:p-8">
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 to-transparent" />
+                    <img
+                      src={card.image}
+                      alt={card.imageAlt}
+                      className="relative z-10 h-48 w-auto object-contain md:h-56"
+                    />
+                  </div>
+                </div>
+              </ScrollReveal>
+            ))}
           </div>
+
+          {/* Bottom CTA */}
+          <ScrollReveal className="mt-24 text-center">
+            <p className="text-lg font-medium text-zinc-700">
+              One profile. One dashboard. All the tools you need.
+            </p>
+          </ScrollReveal>
         </div>
       </section>
     </>

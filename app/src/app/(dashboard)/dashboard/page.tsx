@@ -20,7 +20,7 @@ function getGravatarUrl(email: string): string {
   return `https://www.gravatar.com/avatar/${hash}?d=404&s=80`;
 }
 
-const SCORE_OPTIONS = [50, 60, 70, 80];
+const SCORE_OPTIONS = [30, 40, 50, 60, 70, 80];
 const ENTRY_UNLOCK_THRESHOLD = 3;
 
 export default function DashboardPage() {
@@ -45,7 +45,7 @@ export default function DashboardPage() {
   const interests = profile?.interests ?? [];
   const strengths = profile?.strengths ?? [];
   const major = profile?.major;
-  const minScore = profile?.minScore ?? 50;
+  const minScore = profile?.minScore ?? 30;
 
   const {
     items: internships,

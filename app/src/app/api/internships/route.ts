@@ -213,7 +213,7 @@ export async function GET(request: Request) {
   const major = searchParams.get("major") ?? undefined;
   const location = searchParams.get("location") ?? undefined;
   const keywordsOverride = searchParams.get("keywords") ?? undefined;
-  const minScore = Number.parseInt(searchParams.get("minScore") ?? "50", 10);
+  const minScore = Number.parseInt(searchParams.get("minScore") ?? "30", 10);
   const pageParam = searchParams.get("page");
   const page = pageParam ? Number.parseInt(pageParam, 10) || undefined : undefined;
 
