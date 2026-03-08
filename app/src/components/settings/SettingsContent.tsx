@@ -12,8 +12,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { getStoredToken } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { updateEmail, updatePassword, signOutApi } from "@/lib/account-api";
-
-const MIN_PASSWORD_LENGTH = 8;
+import { isValidEmail, isValidPassword } from "@/lib/validation";
 
 function Toggle({
   checked,
@@ -129,6 +128,10 @@ export function SettingsContent() {
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEmail.trim()) return;
+    if (!isValidEmail(newEmail)) {
+      setStatus({ type: "error", msg: "Enter a valid email address." });
+      return;
+    }
     if (hasAccountApi) {
       setEmailSubmitting(true);
       setStatus(null);
@@ -160,10 +163,9 @@ export function SettingsContent() {
     if (!currentPassword.trim()) {
       errors.current = "Enter your current password.";
     }
-    if (!newPassword) {
-      errors.new = "Enter a new password.";
-    } else if (newPassword.length < MIN_PASSWORD_LENGTH) {
-      errors.new = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+    const pwdCheck = isValidPassword(newPassword, { requireComplexity: true });
+    if (!pwdCheck.valid) {
+      errors.new = pwdCheck.message;
     }
     if (newPassword !== confirmPassword) {
       errors.confirm = "Passwords do not match.";

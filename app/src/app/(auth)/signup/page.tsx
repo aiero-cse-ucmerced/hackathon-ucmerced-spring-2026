@@ -19,19 +19,12 @@ import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { useOnlineStatus } from "@/lib/use-online-status";
 import { env } from "@/lib/env";
 import { workerSignup, workerGoogleLogin, workerCheckEmail } from "@/lib/worker-auth-api";
-
-const MIN_PASSWORD_LENGTH = 8;
-
-/** Basic email format validation (RFC 5322 simplified). */
-function isValidEmailFormat(value: string): boolean {
-  const trimmed = value.trim();
-  if (!trimmed) return false;
-  const at = trimmed.indexOf("@");
-  if (at <= 0 || at === trimmed.length - 1) return false;
-  const domain = trimmed.slice(at + 1);
-  if (!domain.includes(".")) return false;
-  return trimmed.length <= 254;
-}
+import {
+  isValidEmail,
+  isValidPassword,
+  isValidDisplayName,
+  sanitizeDisplayName,
+} from "@/lib/validation";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -59,7 +52,7 @@ export default function SignupPage() {
   const handleEmailBlur = useCallback(() => {
     const trimmed = email.trim();
     if (!trimmed || !env.useWorkersApi) return;
-    if (!isValidEmailFormat(trimmed)) return;
+    if (!isValidEmail(trimmed)) return;
 
     if (checkEmailTimeoutRef.current) {
       clearTimeout(checkEmailTimeoutRef.current);
@@ -110,14 +103,12 @@ export default function SignupPage() {
     }
 
     const errors: typeof fieldErrors = {};
-    if (!name.trim()) errors.name = "Name is required.";
+    const nameCheck = isValidDisplayName(name);
+    if (!nameCheck.valid) errors.name = nameCheck.message;
     if (!email.trim()) errors.email = "Email is required.";
-    else if (!isValidEmailFormat(email)) errors.email = "Enter a valid email address.";
-    if (!password) {
-      errors.password = "Password is required.";
-    } else if (password.length < MIN_PASSWORD_LENGTH) {
-      errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
-    }
+    else if (!isValidEmail(email)) errors.email = "Enter a valid email address.";
+    const pwdCheck = isValidPassword(password, { requireComplexity: true });
+    if (!pwdCheck.valid) errors.password = pwdCheck.message;
     if (password !== confirmPassword) {
       errors.confirmPassword = "Passwords do not match.";
     }
@@ -133,14 +124,14 @@ export default function SignupPage() {
     try {
       if (env.useWorkersApi) {
         const authRes = await workerSignup({
-          name,
-          email,
+          name: sanitizeDisplayName(name),
+          email: email.trim().toLowerCase(),
           password,
           turnstile_token: token ?? undefined,
         });
-        signIn({ name, email }, authRes.token);
+        signIn({ name: sanitizeDisplayName(name), email: email.trim().toLowerCase() }, authRes.token);
       } else {
-        signIn({ name, email });
+        signIn({ name: sanitizeDisplayName(name), email: email.trim().toLowerCase() });
       }
       router.replace("/onboarding");
     } catch (err) {
@@ -212,7 +203,7 @@ export default function SignupPage() {
               id="password"
               type="password"
               autoComplete="new-password"
-              placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+              placeholder="At least 8 characters, include a letter and number"
               value={password}
               onChange={(event) => {
                 setPassword(event.target.value);

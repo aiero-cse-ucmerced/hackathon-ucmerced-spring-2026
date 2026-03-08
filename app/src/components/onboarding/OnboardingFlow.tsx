@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import {
@@ -9,8 +9,10 @@ import {
   STRENGTH_OPTIONS,
   patchProfile,
   setOnboardingComplete,
+  storeResume,
 } from "@/lib/internships-api";
 import type { MajorOption } from "@/lib/internships-api";
+import { isValidResumeFile } from "@/lib/validation";
 
 export type OnboardingFlowAuth = {
   name?: string;
@@ -21,15 +23,16 @@ export type OnboardingFlowAuth = {
 const MIN_INTERESTS = 3;
 const TRANSITION_MS = 320;
 
-type Step = "major" | "interests" | "strengths" | "experiences";
+type Step = "major" | "interests" | "strengths" | "experiences" | "resume";
 
-const STEPS: Step[] = ["major", "interests", "strengths", "experiences"];
+const STEPS: Step[] = ["major", "interests", "strengths", "experiences", "resume"];
 
 const STEP_LABELS: Record<Step, string> = {
   major: "What's your major?",
   interests: "What are you interested in?",
   strengths: "What are your strengths?",
   experiences: "Any past experiences to share?",
+  resume: "Upload your resume",
 };
 
 const STEP_SUBTITLES: Record<Step, string> = {
@@ -37,6 +40,8 @@ const STEP_SUBTITLES: Record<Step, string> = {
   interests: "Select at least 3 areas related to your career goals.",
   strengths: "Pick what best describes you (optional).",
   experiences: "Briefly list roles, projects, or activities (optional).",
+  resume:
+    "We'll use this with Gemini to give you personalized internship tips and recommendations. PDF or Word, max 5MB.",
 };
 
 function StepContentMajor({
@@ -188,6 +193,94 @@ function StepContentExperiences({
   );
 }
 
+function StepContentResume({
+  resumeFile,
+  setResumeFile,
+  resumeError,
+  setResumeError,
+  onFileSelect,
+}: {
+  resumeFile: File | null;
+  setResumeFile: (f: File | null) => void;
+  resumeError: string | null;
+  setResumeError: (s: string | null) => void;
+  onFileSelect: (file: File) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    setResumeError(null);
+    if (!file) return;
+    const check = isValidResumeFile(file);
+    if (!check.valid) {
+      setResumeError(check.message ?? "Invalid file.");
+      return;
+    }
+    setResumeFile(file);
+    onFileSelect(file);
+  }
+
+  return (
+    <>
+      <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 md:text-3xl">
+        {STEP_LABELS.resume}
+      </h2>
+      <p className="mt-2 text-zinc-500">{STEP_SUBTITLES.resume}</p>
+      <div className="mt-8 space-y-4">
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          onChange={handleChange}
+          className="hidden"
+          aria-label="Upload resume"
+        />
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => inputRef.current?.click()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              inputRef.current?.click();
+            }
+          }}
+          className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50/50 px-6 py-10 transition-colors hover:border-zinc-400 hover:bg-zinc-100/50 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-zinc-500"
+            aria-hidden
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" x2="12" y1="3" y2="15" />
+          </svg>
+          <p className="mt-3 text-sm font-medium text-zinc-700">
+            {resumeFile ? resumeFile.name : "Click to upload PDF or Word"}
+          </p>
+          <p className="mt-1 text-xs text-zinc-500">Max 5MB</p>
+        </div>
+        {resumeError && (
+          <p className="text-sm text-red-600" role="alert">
+            {resumeError}
+          </p>
+        )}
+      </div>
+    </>
+  );
+}
+
 export function OnboardingFlow({
   user = null,
   token = null,
@@ -208,14 +301,17 @@ export function OnboardingFlow({
   const [interests, setInterests] = useState<string[]>([]);
   const [strengths, setStrengths] = useState<string[]>([]);
   const [pastExperiences, setPastExperiences] = useState<string>("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeError, setResumeError] = useState<string | null>(null);
 
   const step = STEPS[stepIndex];
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEPS.length - 1;
   const canProceed =
     (step === "major" && major !== "") ||
-    (step !== "major" && step !== "interests") ||
-    (step === "interests" && interests.length >= MIN_INTERESTS);
+    (step !== "major" && step !== "interests" && step !== "resume") ||
+    (step === "interests" && interests.length >= MIN_INTERESTS) ||
+    step === "resume";
 
   const toggleInterest = useCallback((value: string) => {
     setInterests((prev) =>
@@ -227,6 +323,14 @@ export function OnboardingFlow({
     setStrengths((prev) =>
       prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]
     );
+  }, []);
+
+  const handleResumeSelect = useCallback(async (file: File) => {
+    try {
+      await storeResume(file);
+    } catch (e) {
+      setResumeError("Failed to save resume. Try again.");
+    }
   }, []);
 
   const goNext = useCallback(() => {
@@ -283,6 +387,13 @@ export function OnboardingFlow({
       },
       token ?? undefined
     );
+    if (resumeFile) {
+      try {
+        await storeResume(resumeFile);
+      } catch {
+        // Non-blocking; user can re-upload from profile later
+      }
+    }
     setOnboardingComplete();
     router.push("/dashboard");
   }
@@ -317,6 +428,15 @@ export function OnboardingFlow({
         <StepContentExperiences
           pastExperiences={pastExperiences}
           setPastExperiences={setPastExperiences}
+        />
+      )}
+      {s === "resume" && (
+        <StepContentResume
+          resumeFile={resumeFile}
+          setResumeFile={setResumeFile}
+          resumeError={resumeError}
+          setResumeError={setResumeError}
+          onFileSelect={handleResumeSelect}
         />
       )}
     </div>

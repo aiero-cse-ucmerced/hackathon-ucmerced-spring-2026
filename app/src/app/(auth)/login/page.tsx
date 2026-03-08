@@ -19,19 +19,7 @@ import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { useOnlineStatus } from "@/lib/use-online-status";
 import { env } from "@/lib/env";
 import { workerLogin, workerGoogleLogin } from "@/lib/worker-auth-api";
-
-const MIN_PASSWORD_LENGTH = 8;
-
-/** Basic email format validation. */
-function isValidEmailFormat(value: string): boolean {
-  const trimmed = value.trim();
-  if (!trimmed) return false;
-  const at = trimmed.indexOf("@");
-  if (at <= 0 || at === trimmed.length - 1) return false;
-  const domain = trimmed.slice(at + 1);
-  if (!domain.includes(".")) return false;
-  return trimmed.length <= 254;
-}
+import { isValidEmail, isValidPassword } from "@/lib/validation";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -69,11 +57,9 @@ export default function LoginPage() {
 
     const errors: { email?: string; password?: string } = {};
     if (!email.trim()) errors.email = "Email is required.";
-    if (!password) {
-      errors.password = "Password is required.";
-    } else if (password.length < MIN_PASSWORD_LENGTH) {
-      errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
-    }
+    else if (!isValidEmail(email)) errors.email = "Enter a valid email address.";
+    const pwdCheck = isValidPassword(password);
+    if (!pwdCheck.valid) errors.password = pwdCheck.message;
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -199,7 +185,7 @@ export default function LoginPage() {
               id="password"
               type="password"
               autoComplete="current-password"
-              placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+              placeholder="At least 8 characters"
               value={password}
               onChange={(event) => {
                 setPassword(event.target.value);

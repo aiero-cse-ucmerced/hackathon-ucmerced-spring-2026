@@ -23,6 +23,12 @@ import {
   type UserProfile,
 } from "@/lib/internships-api";
 import { getStoredToken } from "@/lib/auth";
+import {
+  isValidDisplayName,
+  sanitizeDisplayName,
+  sanitizePastExperiences,
+  isValidAvatarFile,
+} from "@/lib/validation";
 
 const MIN_INTERESTS = 3;
 
@@ -123,34 +129,51 @@ export default function ProfilePage() {
     });
   }, []);
 
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+
   function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
+    event.target.value = "";
+    if (!file) return;
+    const check = isValidAvatarFile(file);
+    if (!check.valid) {
+      setAvatarError(check.message ?? "Invalid file.");
+      return;
+    }
+    setAvatarError(null);
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = reader.result as string;
       setDraft((c) => ({ ...c, avatarUrl: dataUrl }));
     };
     reader.readAsDataURL(file);
-    event.target.value = "";
   }
+
+  const [submitErrors, setSubmitErrors] = useState<{ name?: string }>({});
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmitErrors({});
+    const nameCheck = isValidDisplayName(draft.name ?? "");
+    if (!nameCheck.valid) {
+      setSubmitErrors({ name: nameCheck.message });
+      return;
+    }
     setSaving(true);
     setSavedMessage(null);
     try {
       const token = getStoredToken();
+      const sanitizedPast = sanitizePastExperiences(draft.pastExperiences ?? []);
       await patchProfile(
         {
-          name: draft.name,
+          name: sanitizeDisplayName(draft.name ?? ""),
           email: draft.email,
           major: draft.major,
           age: draft.age,
           avatarUrl: draft.avatarUrl ?? null,
           interests: draft.interests,
           strengths: draft.strengths,
-          pastExperiences: draft.pastExperiences,
+          pastExperiences: sanitizedPast,
         },
         token ?? undefined
       );
@@ -171,21 +194,30 @@ export default function ProfilePage() {
       : "";
 
   return (
-    <div style={{ viewTransitionName: "vt-content" }}>
-      <Card className="mx-auto mt-10 w-full max-w-2xl">
-        <CardHeader>
-        <CardTitle>Profile &amp; preferences</CardTitle>
-        <CardDescription>
-          Same options as onboarding. Update your interests, strengths, and
-          past experiences so we can match you accurately.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <div className="flex flex-col items-start gap-3">
-            <Label>Profile photo</Label>
-            <div className="flex items-center gap-4">
-              <Avatar size="lg" className="shrink-0 ring-1 ring-zinc-200">
+    <div style={{ viewTransitionName: "vt-content" }} className="mx-auto max-w-3xl">
+      {/* Hero section – visual hierarchy per Claritee: identity first */}
+      <header className="mb-10">
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 md:text-3xl">
+          Profile &amp; preferences
+        </h1>
+        <p className="mt-2 max-w-xl text-base leading-relaxed text-zinc-600">
+          Update your interests, strengths, and past experiences so we can match
+          you accurately with internships and jobs.
+        </p>
+      </header>
+
+      <form className="space-y-10" onSubmit={handleSubmit}>
+        {/* Personal info card – grouped by information architecture */}
+        <Card className="overflow-hidden border-zinc-200 shadow-sm transition-shadow hover:shadow-md">
+          <CardHeader className="border-b border-zinc-100 bg-zinc-50/50">
+            <CardTitle className="text-base">Personal information</CardTitle>
+            <CardDescription>
+              Your name and photo help personalize your experience.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6 pt-6">
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+              <Avatar size="lg" className="shrink-0 ring-2 ring-zinc-200">
                 <Avatar.Image
                   src={draft.avatarUrl ?? DEFAULT_AVATAR_IMAGE}
                   alt={draft.name ?? "Profile"}
@@ -194,7 +226,10 @@ export default function ProfilePage() {
                   <Avatar.UserIcon />
                 </Avatar.Fallback>
               </Avatar>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-1 flex-col gap-2">
+                {avatarError && (
+                  <p className="text-sm text-red-600" role="alert">{avatarError}</p>
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -212,44 +247,61 @@ export default function ProfilePage() {
                   Upload picture
                 </Button>
                 <p className="text-xs text-zinc-500">
-                  JPG, PNG or GIF. Your default is the silhouette until you upload.
+                  JPG, PNG or GIF. Max 2MB.
                 </p>
               </div>
             </div>
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={draft.name ?? ""}
-                onChange={(e) =>
-                  setDraft((c) => ({ ...c, name: e.target.value }))
-                }
-                required
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={draft.name ?? ""}
+                  onChange={(e) => {
+                    setDraft((c) => ({ ...c, name: e.target.value }));
+                    if (submitErrors.name) setSubmitErrors((p) => ({ ...p, name: undefined }));
+                  }}
+                  invalid={!!submitErrors.name}
+                  aria-invalid={!!submitErrors.name}
+                  required
+                  className="transition-colors"
+                />
+                {submitErrors.name && (
+                  <p className="text-sm text-red-600" role="alert">{submitErrors.name}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="age">Age (optional)</Label>
+                <Input
+                  id="age"
+                  type="number"
+                  min={13}
+                  max={120}
+                  value={draft.age ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value ? parseInt(e.target.value, 10) : undefined;
+                    setDraft((c) => ({ ...c, age: v }));
+                  }}
+                  placeholder="For event recommendations"
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="age">Age (optional)</Label>
-              <Input
-                id="age"
-                type="number"
-                min={13}
-                max={120}
-                value={draft.age ?? ""}
-                onChange={(e) => {
-                  const v = e.target.value ? parseInt(e.target.value, 10) : undefined;
-                  setDraft((c) => ({ ...c, age: v }));
-                }}
-                placeholder="For event recommendations"
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
+          </CardContent>
+        </Card>
+
+        {/* Academic & interests – clear sections */}
+        <Card className="overflow-hidden border-zinc-200 shadow-sm transition-shadow hover:shadow-md">
+          <CardHeader className="border-b border-zinc-100 bg-zinc-50/50">
+            <CardTitle className="text-base">Academic &amp; interests</CardTitle>
+            <CardDescription>
+              We use this to match you with relevant internships and jobs.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6 pt-6">
+            <div className="space-y-2">
               <Label>Major</Label>
-              <p className="text-sm text-zinc-600">
-                Select one or more majors.
-              </p>
+              <p className="text-sm text-zinc-600">Select one or more majors.</p>
               <div className="flex flex-wrap gap-2 pt-1">
                 {MAJOR_OPTIONS.map((label) => {
                   const active = draft.majors.includes(label);
@@ -258,10 +310,10 @@ export default function ProfilePage() {
                       key={label}
                       type="button"
                       onClick={() => toggleMajor(label)}
-                      className={`rounded-full border px-3 py-1 text-sm ${
+                      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
                         active
-                          ? "border-zinc-900 bg-zinc-900 text-white"
-                          : "border-zinc-300 bg-white text-zinc-800 hover:border-zinc-400"
+                          ? "border-zinc-900 bg-zinc-900 text-white shadow-sm"
+                          : "border-zinc-300 bg-white text-zinc-800 hover:border-zinc-400 hover:bg-zinc-50"
                       }`}
                     >
                       {label}
@@ -270,69 +322,74 @@ export default function ProfilePage() {
                 })}
               </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label>Interests</Label>
-            <p className="text-sm text-zinc-600">
-              Select at least {MIN_INTERESTS} areas (same as onboarding).
-            </p>
-            <div className="flex flex-wrap gap-2 pt-1">
-              {WORKING_FIELD_INTERESTS.map((label) => {
-                const active = draft.interests.includes(label);
-                return (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => toggleInterest(label)}
-                    className={`rounded-full border px-3 py-1 text-sm ${
-                      active
-                        ? "border-zinc-900 bg-zinc-900 text-white"
-                        : "border-zinc-300 bg-white text-zinc-800 hover:border-zinc-400"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
+            <div className="space-y-2">
+              <Label>Interests</Label>
+              <p className="text-sm text-zinc-600">
+                Select at least {MIN_INTERESTS} areas (same as onboarding).
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {WORKING_FIELD_INTERESTS.map((label) => {
+                  const active = draft.interests.includes(label);
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => toggleInterest(label)}
+                      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+                        active
+                          ? "border-zinc-900 bg-zinc-900 text-white shadow-sm"
+                          : "border-zinc-300 bg-white text-zinc-800 hover:border-zinc-400 hover:bg-zinc-50"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              {draft.interests.length > 0 &&
+                draft.interests.length < MIN_INTERESTS && (
+                  <p className="text-sm text-amber-600">
+                    Select at least {MIN_INTERESTS - draft.interests.length} more.
+                  </p>
+                )}
             </div>
-            {draft.interests.length > 0 &&
-              draft.interests.length < MIN_INTERESTS && (
-                <p className="text-sm text-amber-600">
-                  Select at least {MIN_INTERESTS - draft.interests.length} more.
-                </p>
-              )}
-          </div>
 
-          <div className="space-y-2">
-            <Label>Strengths</Label>
-            <p className="text-sm text-zinc-600">Optional.</p>
-            <div className="flex flex-wrap gap-2 pt-1">
-              {STRENGTH_OPTIONS.map((label) => {
-                const active = draft.strengths.includes(label);
-                return (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => toggleStrength(label)}
-                    className={`rounded-full border px-3 py-1 text-sm ${
-                      active
-                        ? "border-zinc-900 bg-zinc-900 text-white"
-                        : "border-zinc-300 bg-white text-zinc-800 hover:border-zinc-400"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
+            <div className="space-y-2">
+              <Label>Strengths</Label>
+              <p className="text-sm text-zinc-600">Optional.</p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {STRENGTH_OPTIONS.map((label) => {
+                  const active = draft.strengths.includes(label);
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => toggleStrength(label)}
+                      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+                        active
+                          ? "border-zinc-900 bg-zinc-900 text-white shadow-sm"
+                          : "border-zinc-300 bg-white text-zinc-800 hover:border-zinc-400 hover:bg-zinc-50"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="past-experiences">Past experiences</Label>
-            <p className="text-sm text-zinc-600">
-              One per line or comma-separated (optional).
-            </p>
+        {/* Past experiences – tall page pattern: answer all questions */}
+        <Card className="overflow-hidden border-zinc-200 shadow-sm transition-shadow hover:shadow-md">
+          <CardHeader className="border-b border-zinc-100 bg-zinc-50/50">
+            <CardTitle className="text-base">Past experiences</CardTitle>
+            <CardDescription>
+              One per line or comma-separated. Helps us tailor recommendations.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
             <textarea
               id="past-experiences"
               value={pastExperiencesText}
@@ -347,24 +404,31 @@ export default function ProfilePage() {
               }
               placeholder="e.g. Campus club treasurer, summer volunteer, class project lead..."
               rows={4}
-              className="w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/20"
+              className="w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/20"
             />
-          </div>
+          </CardContent>
+        </Card>
 
-          {savedMessage && (
-            <p className="text-sm text-emerald-700" role="status">
-              {savedMessage}
-            </p>
-          )}
+        {/* CTA farther down – Orbit Media: persuasion happens below the fold */}
+        {savedMessage && (
+          <p className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status">
+            {savedMessage}
+          </p>
+        )}
 
-          <div className="flex items-center justify-between pt-2">
-            <Button type="submit" disabled={saving || loading}>
-              {saving ? "Saving…" : "Save profile"}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-      </Card>
+        <div className="flex items-center justify-between border-t border-zinc-200 pt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={saving || loading}>
+            {saving ? "Saving…" : "Save profile"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

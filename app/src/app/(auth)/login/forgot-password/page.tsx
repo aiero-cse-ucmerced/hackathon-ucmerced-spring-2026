@@ -20,19 +20,9 @@ import { useOnlineStatus } from "@/lib/use-online-status";
 import { env } from "@/lib/env";
 import { workerForgotPassword, workerResetPassword } from "@/lib/worker-auth-api";
 import { toast } from "sonner";
+import { isValidEmail, isValidPassword } from "@/lib/validation";
 
-const MIN_PASSWORD_LENGTH = 8;
 const SUPPORT_LINK = "/contact";
-
-function isValidEmailFormat(value: string): boolean {
-  const trimmed = value.trim();
-  if (!trimmed) return false;
-  const at = trimmed.indexOf("@");
-  if (at <= 0 || at === trimmed.length - 1) return false;
-  const domain = trimmed.slice(at + 1);
-  if (!domain.includes(".")) return false;
-  return trimmed.length <= 254;
-}
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -82,7 +72,7 @@ export default function ForgotPasswordPage() {
       setError("Enter your email address.");
       return;
     }
-    if (!isValidEmailFormat(email)) {
+    if (!isValidEmail(email)) {
       setError("Enter a valid email address.");
       return;
     }
@@ -123,8 +113,9 @@ export default function ForgotPasswordPage() {
   async function handleSetPassword(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    if (newPassword.length < MIN_PASSWORD_LENGTH) {
-      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+    const pwdCheck = isValidPassword(newPassword, { requireComplexity: true });
+    if (!pwdCheck.valid) {
+      setError(pwdCheck.message ?? "Invalid password.");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -256,8 +247,8 @@ export default function ForgotPasswordPage() {
                   autoComplete="new-password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
-                  minLength={MIN_PASSWORD_LENGTH}
+                  placeholder="At least 8 characters, include a letter and number"
+                  minLength={8}
                   required
                 />
               </div>
@@ -291,7 +282,11 @@ export default function ForgotPasswordPage() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={submitting || newPassword.length < MIN_PASSWORD_LENGTH || newPassword !== confirmPassword}
+                  disabled={
+                  submitting ||
+                  !isValidPassword(newPassword, { requireComplexity: true }).valid ||
+                  newPassword !== confirmPassword
+                }
                 >
                   {submitting ? "Updating…" : "Update password"}
                 </Button>

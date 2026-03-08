@@ -70,6 +70,62 @@ export const STRENGTH_OPTIONS = [
 const PROFILE_STORAGE_KEY = "uncookedaura_profile";
 const ONBOARDING_DONE_KEY = "uncookedaura_onboarding_done";
 const PENDING_SYNC_KEY = "uncookedaura_profile_pending_sync";
+const RESUME_STORAGE_KEY = "uncookedaura_resume";
+
+export type StoredResume = {
+  fileName: string;
+  mimeType: string;
+  base64: string;
+  uploadedAt: string;
+};
+
+export function storeResume(file: File): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(",")[1];
+      if (!base64) {
+        reject(new Error("Failed to read file"));
+        return;
+      }
+      const data: StoredResume = {
+        fileName: file.name,
+        mimeType: file.type,
+        base64,
+        uploadedAt: new Date().toISOString(),
+      };
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(data));
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      } else {
+        resolve();
+      }
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+export function getStoredResume(): StoredResume | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(RESUME_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as StoredResume;
+  } catch {
+    return null;
+  }
+}
+
+export function clearStoredResume(): void {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(RESUME_STORAGE_KEY);
+  }
+}
 
 function buildHeaders(token?: string): Record<string, string> {
   const headers: Record<string, string> = {
@@ -238,6 +294,7 @@ export function clearOnboardingState(): void {
     localStorage.removeItem(ONBOARDING_DONE_KEY);
     localStorage.removeItem(PROFILE_STORAGE_KEY);
     localStorage.removeItem(PENDING_SYNC_KEY);
+    localStorage.removeItem(RESUME_STORAGE_KEY);
   }
 }
 
