@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/components/AuthProvider";
 
 export function LandingHeroCTA() {
-  const { isLoggedIn, isLoading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (isLoading) {
+  if (loading) {
     return (
       <span className="inline-flex h-12 min-w-[140px] items-center justify-center gap-2 rounded-lg border border-transparent bg-zinc-200 px-6 text-base font-medium text-zinc-500">
         Loading…
@@ -14,7 +14,7 @@ export function LandingHeroCTA() {
     );
   }
 
-  if (isLoggedIn) {
+  if (user) {
     return (
       <Link
         href="/dashboard"

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ViewTransitionLink } from "@/components/ViewTransitionLink";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,6 +39,24 @@ export default function ForgotPasswordPage() {
 
   const disabled = submitting || !online;
 
+  const transitionToStep = useCallback((nextStep: "email" | "otp" | "password") => {
+    const update = () => setStep(nextStep);
+
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (
+      !prefersReducedMotion &&
+      typeof document !== "undefined" &&
+      "startViewTransition" in document
+    ) {
+      document.startViewTransition?.(update);
+    } else {
+      update();
+    }
+  }, []);
+
   async function handleSendEmail(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -66,7 +85,7 @@ export default function ForgotPasswordPage() {
       toast.info("Check your email", {
         description: `We sent an 8-digit code to ${email.trim()}. Enter it below.`,
       });
-      setStep("otp");
+      transitionToStep("otp");
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to send reset email.";
@@ -122,13 +141,21 @@ export default function ForgotPasswordPage() {
 
   return (
     <>
-      <Card className="mx-auto w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Reset password</CardTitle>
-          <CardDescription>
-            {step === "email" && "Enter your email and we'll send you an 8-digit code."}
-            {step === "otp" && "Enter the code we sent to your email."}
-          </CardDescription>
+      <Card className="vt-auth-card mx-auto w-full max-w-md border-zinc-200/80 bg-white shadow-lg shadow-zinc-200/50">
+        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-4">
+          <div className="space-y-1.5">
+            <CardTitle>Reset password</CardTitle>
+            <CardDescription>
+              {step === "email" && "Enter your email and we'll send you an 8-digit code."}
+              {step === "otp" && "Enter the code we sent to your email."}
+            </CardDescription>
+          </div>
+          <ViewTransitionLink
+            href="/login"
+            className="shrink-0 text-sm font-medium text-zinc-700 hover:text-zinc-900"
+          >
+            Back to login
+          </ViewTransitionLink>
         </CardHeader>
         <CardContent>
           {step === "email" && (

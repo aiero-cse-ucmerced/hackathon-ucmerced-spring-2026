@@ -95,7 +95,7 @@ export default function LoginPage() {
   // Render a static placeholder until mounted so server and client HTML match (avoids hydration mismatch).
   if (!mounted) {
     return (
-      <Card className="mx-auto w-full max-w-md shadow-md">
+      <Card className="vt-auth-card mx-auto w-full max-w-md border-zinc-200/80 bg-white shadow-lg shadow-zinc-200/50">
         <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-4">
           <div className="space-y-1.5">
             <CardTitle className="text-xl font-semibold tracking-tight text-zinc-900">
@@ -130,7 +130,7 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-md shadow-md">
+    <Card className="vt-auth-card mx-auto w-full max-w-md border-zinc-200/80 bg-white shadow-lg shadow-zinc-200/50">
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-4">
         <div className="space-y-1.5">
           <CardTitle className="text-xl font-semibold tracking-tight text-zinc-900">
@@ -149,7 +149,7 @@ export default function LoginPage() {
       </CardHeader>
       <CardContent className="space-y-6">
         <form className="space-y-5" onSubmit={handleSubmit}>
-          <div className="space-y-2">
+          <div className="space-y-2 auth-field-1">
             <Label htmlFor="email" className="text-sm font-medium text-zinc-900">
               Email
             </Label>
@@ -172,7 +172,7 @@ export default function LoginPage() {
               <p className="text-sm text-red-600" role="alert">{fieldErrors.email}</p>
             )}
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 auth-field-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password" className="text-sm font-medium text-zinc-900">
                 Password
@@ -204,12 +204,12 @@ export default function LoginPage() {
             )}
           </div>
           {error && (
-            <p className="text-sm text-red-600" role="status">
+            <p className="auth-field-3 text-sm text-red-600" role="status">
               {error}
             </p>
           )}
           {mounted && !online && !error && (
-            <p className="text-sm text-amber-600">
+            <p className="auth-field-3 text-sm text-amber-600">
               You&apos;re offline. Connect to the internet to login.
             </p>
           )}
@@ -218,12 +218,12 @@ export default function LoginPage() {
             type="submit"
             disabled={disabled}
             size="lg"
-            className="h-11 w-full text-base font-medium"
+            className="auth-field-5 h-11 w-full text-base font-medium"
           >
             {submitting ? "Logging in…" : "Login"}
           </Button>
           {env.googleClientId ? (
-            <div className="flex flex-col items-center gap-2">
+            <div className="auth-field-6 flex flex-col items-center gap-2">
               <div className="relative w-full">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-zinc-200" />

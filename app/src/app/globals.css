@@ -86,6 +86,13 @@ body {
   animation: onboarding-slide-out-back 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+/* Cross-document view transitions for auth and navigation (Piccalilli-inspired) */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+
 /* View Transitions API: root hidden (no flash); named groups slide with stagger */
 @supports (view-transition-name: none) {
   ::view-transition-old(root) {
@@ -128,6 +135,59 @@ body {
   ::view-transition-new(vt-content) {
     animation: view-transition-slide-in-from-left 2s ease-in-out 0.08s forwards;
   }
+  /* Auth flow: login/signup/forgot-password card morph (cross-fade + subtle scale) */
+  ::view-transition-old(vt-auth-card) {
+    animation: vt-auth-fade-out 0.25s ease-out forwards;
+  }
+  ::view-transition-new(vt-auth-card) {
+    animation: vt-auth-fade-in 0.35s ease-out 0.05s forwards;
+  }
+  ::view-transition-image-pair(vt-auth-card) {
+    overflow: hidden;
+  }
+}
+@keyframes vt-auth-fade-out {
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+@keyframes vt-auth-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Auth form: staggered field entrance (respect reduced motion) */
+@keyframes auth-field-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* Shared auth card for view transitions between login/signup/forgot-password */
+.vt-auth-card {
+  view-transition-name: vt-auth-card;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .auth-field-1 { animation: auth-field-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both; }
+  .auth-field-2 { animation: auth-field-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both; }
+  .auth-field-3 { animation: auth-field-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.19s both; }
+  .auth-field-4 { animation: auth-field-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.26s both; }
+  .auth-field-5 { animation: auth-field-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.33s both; }
+  .auth-field-6 { animation: auth-field-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both; }
+  .auth-field-7 { animation: auth-field-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.47s both; }
+  .auth-field-8 { animation: auth-field-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.54s both; }
 }
 @keyframes view-transition-fade-out {
   to {

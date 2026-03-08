@@ -5,7 +5,7 @@ import { ViewTransitionLink } from "@/components/ViewTransitionLink";
 import { Logo } from "@/components/Logo";
 import { md5 } from "@/lib/md5";
 import { Avatar, DEFAULT_AVATAR_IMAGE } from "@/components/ui/avatar";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/components/AuthProvider";
 
 function getGravatarUrl(email: string): string {
   const hash = md5(email.trim().toLowerCase());
@@ -14,7 +14,7 @@ function getGravatarUrl(email: string): string {
 
 export function LandingHeader() {
   const [imageError, setImageError] = useState(false);
-  const { user, isLoggedIn, isLoading } = useAuth();
+  const { user, loading } = useAuth();
 
   const avatarSrc = useMemo(() => {
     if (!user) return DEFAULT_AVATAR_IMAGE;
@@ -29,7 +29,7 @@ export function LandingHeader() {
       <div className="mx-auto flex max-w-6xl items-center justify-between">
         <Logo />
         <nav className="flex items-center gap-4">
-          {!isLoading && isLoggedIn && (
+          {!loading && user && (
             <ViewTransitionLink
               href="/settings"
               className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"

@@ -97,7 +97,7 @@ export default function SignupPage() {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-md">
+    <Card className="vt-auth-card mx-auto w-full max-w-md border-zinc-200/80 bg-white shadow-lg shadow-zinc-200/50">
       <CardHeader>
         <CardTitle>Create your account</CardTitle>
         <CardDescription>
@@ -107,7 +107,7 @@ export default function SignupPage() {
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 auth-field-1">
             <Label htmlFor="name">Name</Label>
             <Input
               id="name"
@@ -124,7 +124,7 @@ export default function SignupPage() {
               <p className="text-sm text-red-600" role="alert">{fieldErrors.name}</p>
             )}
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 auth-field-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -143,7 +143,7 @@ export default function SignupPage() {
               <p className="text-sm text-red-600" role="alert">{fieldErrors.email}</p>
             )}
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 auth-field-3">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
@@ -182,7 +182,7 @@ export default function SignupPage() {
               <p className="text-sm text-red-600" role="alert">{fieldErrors.confirmPassword}</p>
             )}
           </div>
-          <div className="pt-1">
+          <div className="auth-field-5 pt-1">
             <TurnstileWidget onTokenChange={setToken} />
           </div>
           {error && (
@@ -203,7 +203,7 @@ export default function SignupPage() {
             {submitting ? "Signing up…" : "Sign up"}
           </Button>
           {env.googleClientId ? (
-            <div className="mt-4 flex flex-col items-center gap-2">
+            <div className="auth-field-7 mt-4 flex flex-col items-center gap-2">
               <div className="relative w-full">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t border-zinc-200" />
