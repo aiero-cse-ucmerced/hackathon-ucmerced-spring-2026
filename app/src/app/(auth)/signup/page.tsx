@@ -17,6 +17,8 @@ import { Select } from "@/components/ui/select";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { useAuth } from "@/components/AuthProvider";
 import { useOnlineStatus } from "@/lib/use-online-status";
+import { env } from "@/lib/env";
+import { workerSignup } from "@/lib/worker-auth-api";
 
 const MAJORS = ["CSE", "CS", "Applied Math", "Others"] as const;
 const MIN_PASSWORD_LENGTH = 8;
@@ -79,8 +81,21 @@ export default function SignupPage() {
 
     setSubmitting(true);
     try {
-      signIn({ name, email, major });
+      if (env.useWorkersApi) {
+        const { token } = await workerSignup({
+          name,
+          email,
+          password,
+          major: major || undefined,
+          turnstile_token: token ?? undefined,
+        });
+        signIn({ name, email, major }, token);
+      } else {
+        signIn({ name, email, major });
+      }
       router.replace("/onboarding");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign up failed.");
     } finally {
       setSubmitting(false);
     }

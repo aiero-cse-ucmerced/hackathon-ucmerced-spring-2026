@@ -42,6 +42,10 @@ The frontend calls the Worker for:
 - **POST** `/api/profile/avatar` — Multipart upload; Bearer required.
 - **GET** `/api/social-events?lat=&lng=&age=&radius=` — Eventbrite + Gemini personalization.
 - **GET** `/api/geocode?q=...` or `?lat=&lng=` — Nominatim proxy with KV cache.
-- **POST** `/api/auth/signup`, **POST** `/api/auth/login` — Auth; optional `X-API-Key`.
+- **POST** `/api/auth/signup` — Body: `{ email, name, password, major? }`. Optional `X-API-Key`.
+- **POST** `/api/auth/login` — Body: `{ email, password }`. Optional `X-API-Key`.
+- **POST** `/api/auth/google` — Body: `{ id_token }` (Google Sign-In credential). Optional `X-API-Key`.
+
+On success, auth endpoints return `{ token, userId }` and set a **user cookie** `ua_rest_api_key` with the same token. Use this token as **REST API key** for the self-hosted API: send `Authorization: Bearer <token>` on requests to account and passkey endpoints. The Worker profile routes accept the token from either the `Authorization` header or the `ua_rest_api_key` cookie.
 
 The Worker is implemented in the `backend/` folder; deploy with `wrangler`. The self-hosted API is in `self-hosted/`; deploy with Docker Compose.

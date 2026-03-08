@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/components/AuthProvider";
 import { useOnlineStatus } from "@/lib/use-online-status";
+import { env } from "@/lib/env";
+import { workerLogin } from "@/lib/worker-auth-api";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -61,8 +63,18 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
-      signIn({ name: email.split("@")[0] ?? "Student", email });
+      if (env.useWorkersApi) {
+        const { token, userId } = await workerLogin(email, password);
+        signIn(
+          { name: email.split("@")[0] ?? "Student", email },
+          token
+        );
+      } else {
+        signIn({ name: email.split("@")[0] ?? "Student", email });
+      }
       router.replace("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed.");
     } finally {
       setSubmitting(false);
     }

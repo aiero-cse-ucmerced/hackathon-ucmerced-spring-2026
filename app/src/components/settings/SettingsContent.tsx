@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/components/AuthProvider";
+import { getStoredToken } from "@/lib/auth";
+import { env } from "@/lib/env";
+import { updateEmail, updatePassword, signOutApi } from "@/lib/account-api";
 
 const MIN_PASSWORD_LENGTH = 8;
-
-const MOCK_EMAIL = "user@example.com"; // Replace with auth context when available
 
 function Toggle({
   checked,
@@ -95,9 +98,15 @@ function SettingsRow({
 }
 
 export function SettingsContent() {
-  const [email, setEmail] = useState(MOCK_EMAIL);
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+  const token = typeof window !== "undefined" ? getStoredToken() : null;
+  const hasAccountApi = env.useSelfHostedApi && token;
+
+  const [email, setEmail] = useState("");
   const [emailFormOpen, setEmailFormOpen] = useState(false);
   const [newEmail, setNewEmail] = useState("");
+  const [emailSubmitting, setEmailSubmitting] = useState(false);
   const [passwordFormOpen, setPasswordFormOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -107,22 +116,44 @@ export function SettingsContent() {
     new?: string;
     confirm?: string;
   }>({});
+  const [passwordSubmitting, setPasswordSubmitting] = useState(false);
   const [passkeys, setPasskeys] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user?.email) setEmail(user.email);
+  }, [user?.email]);
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEmail.trim()) return;
-    setEmail(newEmail);
-    setNewEmail("");
-    setEmailFormOpen(false);
-    setStatus({ type: "success", msg: "Email updated." });
-    setTimeout(() => setStatus(null), 3000);
+    if (hasAccountApi) {
+      setEmailSubmitting(true);
+      setStatus(null);
+      try {
+        await updateEmail(token!, newEmail.trim());
+        setEmail(newEmail.trim());
+        setNewEmail("");
+        setEmailFormOpen(false);
+        setStatus({ type: "success", msg: "Email updated." });
+        setTimeout(() => setStatus(null), 3000);
+      } catch (err) {
+        setStatus({ type: "error", msg: err instanceof Error ? err.message : "Failed to update email." });
+      } finally {
+        setEmailSubmitting(false);
+      }
+    } else {
+      setEmail(newEmail.trim());
+      setNewEmail("");
+      setEmailFormOpen(false);
+      setStatus({ type: "success", msg: "Email updated (local only)." });
+      setTimeout(() => setStatus(null), 3000);
+    }
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordErrors({});
     const errors: { current?: string; new?: string; confirm?: string } = {};
@@ -141,11 +172,29 @@ export function SettingsContent() {
       setPasswordErrors(errors);
       return;
     }
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setPasswordFormOpen(false);
-    toast.success("Password updated.");
+    if (hasAccountApi) {
+      setPasswordSubmitting(true);
+      try {
+        await updatePassword(token!, currentPassword, newPassword);
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setPasswordFormOpen(false);
+        toast.success("Password updated.");
+      } catch (err) {
+        setPasswordErrors({
+          current: err instanceof Error ? err.message : "Failed to update password.",
+        });
+      } finally {
+        setPasswordSubmitting(false);
+      }
+    } else {
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordFormOpen(false);
+      toast.success("Password updated (local only).");
+    }
   };
 
   const handlePasswordCancel = () => {
@@ -156,11 +205,16 @@ export function SettingsContent() {
     setPasswordErrors({});
   };
 
-  const handleSignOut = () => {
-    // TODO: Clear auth token, redirect to /
-    if (typeof window !== "undefined") {
-      window.location.href = "/";
+  const handleSignOut = async () => {
+    if (hasAccountApi) {
+      try {
+        await signOutApi(token!);
+      } catch {
+        // Continue to clear local state
+      }
     }
+    signOut();
+    router.replace("/");
   };
 
   const handleDownloadData = () => {
@@ -237,8 +291,8 @@ export function SettingsContent() {
                       placeholder="new@email.com"
                       className="rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
                     />
-                    <Button type="submit" variant="primary">
-                      Save
+                    <Button type="submit" variant="primary" disabled={emailSubmitting}>
+                      {emailSubmitting ? "Saving…" : "Save"}
                     </Button>
                     <Button
                       type="button"
@@ -343,8 +397,8 @@ export function SettingsContent() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button type="submit" variant="primary">
-                        Update
+                      <Button type="submit" variant="primary" disabled={passwordSubmitting}>
+                        {passwordSubmitting ? "Updating…" : "Update"}
                       </Button>
                       <Button type="button" variant="secondary" onClick={handlePasswordCancel}>
                         Cancel

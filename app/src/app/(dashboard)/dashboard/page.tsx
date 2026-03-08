@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Avatar, DEFAULT_AVATAR_IMAGE } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MatchedInternshipCard } from "@/components/MatchedInternshipCard";

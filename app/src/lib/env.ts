@@ -1,5 +1,5 @@
 /**
- * UncookedAura – Cloudflare-related environment variables.
+ * UncookedAura – Cloudflare and API environment variables.
  * All client-visible vars must be prefixed with NEXT_PUBLIC_.
  */
 
@@ -8,9 +8,14 @@ function getEnv(key: string): string {
 }
 
 export const env = {
-  /** Cloudflare Workers API base URL (job search, R2-backed data). Empty = use mock data. */
+  /** Cloudflare Workers API base URL (profile, auth, social-events, geocode). Empty = use mock data. */
   get workersApiUrl(): string {
     return getEnv("NEXT_PUBLIC_CF_WORKERS_API_URL").replace(/\/$/, "");
+  },
+
+  /** Self-hosted API base URL (account settings, passkeys). Used for change email, password, sign out. */
+  get selfHostedApiUrl(): string {
+    return getEnv("NEXT_PUBLIC_SELF_HOSTED_API_URL").replace(/\/$/, "");
   },
 
   /** Cloudflare Pages app URL (canonical origin). */
@@ -23,8 +28,13 @@ export const env = {
     return getEnv("NEXT_PUBLIC_CF_API_KEY");
   },
 
-  /** True if we should call the Workers API for live job data. */
+  /** True if we should call the Workers API for live data. */
   get useWorkersApi(): boolean {
     return this.workersApiUrl.length > 0;
+  },
+
+  /** True if self-hosted API is configured (account settings). */
+  get useSelfHostedApi(): boolean {
+    return this.selfHostedApiUrl.length > 0;
   },
 } as const;
