@@ -34,7 +34,9 @@ export default function EventsPage() {
     const longitude = lng ?? -122.4194;
     if (!env.workersApiUrl) {
       setEvents([]);
-      setError("Events API not configured. Set NEXT_PUBLIC_CF_WORKERS_API_URL.");
+      setError(
+        "Events API not configured. Set NEXT_PUBLIC_CF_WORKERS_API_URL in your .env (or Pages/Workers env) to your Worker base URL, e.g. https://your-worker.workers.dev"
+      );
       return;
     }
     setLoadingEvents(true);
@@ -49,6 +51,12 @@ export default function EventsPage() {
       const res = await fetch(`${env.workersApiUrl}/api/social-events?${params.toString()}`, {
         headers: env.apiKey ? { "X-API-Key": env.apiKey } : {},
       });
+      if (!res.ok) {
+        const errText = await res.text();
+        setError(`Events API error (${res.status}): ${errText || res.statusText}`);
+        setEvents([]);
+        return;
+      }
       const data = (await res.json()) as { events?: SocialEvent[] };
       setEvents(data.events ?? []);
     } catch (e) {
@@ -60,10 +68,8 @@ export default function EventsPage() {
   }, [lat, lng, age]);
 
   useEffect(() => {
-    if (lat != null && lng != null) {
-      loadEvents();
-    }
-  }, [lat, lng, loadEvents]);
+    loadEvents();
+  }, [loadEvents]);
 
   const handleUseMyLocation = useCallback(() => {
     setLoading(true);
@@ -175,15 +181,13 @@ export default function EventsPage() {
 
       <section>
         <h2 className="text-lg font-semibold text-zinc-900">Events near you</h2>
-        {lat == null || lng == null ? (
-          <p className="mt-2 text-sm text-zinc-600">
-            Set your location above to see events.
-          </p>
-        ) : loadingEvents ? (
+        {loadingEvents ? (
           <p className="mt-2 text-sm text-zinc-600">Loading events…</p>
         ) : events.length === 0 ? (
           <p className="mt-2 text-sm text-zinc-600">
-            No events found for this location. Try a different area or radius.
+            {lat != null && lng != null
+              ? "No events found for this location. Try a different area or radius."
+              : "Using default location (San Francisco). Set your location above for personalized results."}
           </p>
         ) : (
           <ul className="mt-4 space-y-4">

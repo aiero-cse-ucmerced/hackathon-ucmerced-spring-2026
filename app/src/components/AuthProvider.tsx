@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { clearOnboardingState } from "@/lib/internships-api";
 
 type AuthUser = {
   name: string;
@@ -74,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           window.localStorage.removeItem("uncookedaura:user");
           window.localStorage.removeItem(TOKEN_KEY);
+          clearOnboardingState();
         } catch {
           // Ignore storage errors.
         }

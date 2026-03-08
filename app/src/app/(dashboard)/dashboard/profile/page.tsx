@@ -17,6 +17,8 @@ import { useAuth } from "@/components/AuthProvider";
 import {
   getProfile,
   patchProfile,
+  storeResume,
+  getStoredResume,
   WORKING_FIELD_INTERESTS,
   STRENGTH_OPTIONS,
   MAJOR_OPTIONS,
@@ -28,6 +30,7 @@ import {
   sanitizeDisplayName,
   sanitizePastExperiences,
   isValidAvatarFile,
+  isValidResumeFile,
 } from "@/lib/validation";
 
 const MIN_INTERESTS = 3;
@@ -47,6 +50,17 @@ export default function ProfilePage() {
     majors: [],
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeError, setResumeError] = useState<string | null>(null);
+  const [resumeExtracting, setResumeExtracting] = useState(false);
+  const [resumeTips, setResumeTips] = useState<string[]>([]);
+  const [storedResumeName, setStoredResumeName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const r = getStoredResume();
+    setStoredResumeName(r?.fileName ?? null);
+  }, []);
 
   const loadProfile = useCallback(async () => {
     const token = getStoredToken();
@@ -378,6 +392,108 @@ export default function ProfilePage() {
                 })}
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Resume upload – Gemini extracts past experiences for prefill */}
+        <Card className="overflow-hidden border-zinc-200 shadow-sm transition-shadow hover:shadow-md">
+          <CardHeader className="border-b border-zinc-100 bg-zinc-50/50">
+            <CardTitle className="text-base">Resume</CardTitle>
+            <CardDescription>
+              Upload your resume and we&apos;ll use Gemini to extract past experiences and prefill the section below. PDF or Word, max 5MB.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-6">
+            <input
+              ref={resumeInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                setResumeError(null);
+                if (!file) return;
+                const check = isValidResumeFile(file);
+                if (!check.valid) {
+                  setResumeError(check.message ?? "Invalid file.");
+                  return;
+                }
+                setResumeFile(file);
+              }}
+              className="hidden"
+              aria-label="Upload resume"
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => resumeInputRef.current?.click()}
+              >
+                {resumeFile ? resumeFile.name : storedResumeName ? `Replace ${storedResumeName}` : "Upload resume"}
+              </Button>
+              {resumeFile && (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={resumeExtracting}
+                  onClick={async () => {
+                    setResumeExtracting(true);
+                    setResumeError(null);
+                    setResumeTips([]);
+                    try {
+                      const reader = new FileReader();
+                      const base64 = await new Promise<string>((resolve, reject) => {
+                        reader.onload = () => {
+                          const dataUrl = reader.result as string;
+                          const b = dataUrl.split(",")[1];
+                          resolve(b ?? "");
+                        };
+                        reader.onerror = () => reject(reader.error);
+                        reader.readAsDataURL(resumeFile);
+                      });
+                      const res = await fetch("/api/resume/extract", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ base64, mimeType: resumeFile.type }),
+                      });
+                      const data = (await res.json()) as { pastExperiences?: string[]; tips?: string[]; error?: string };
+                      if (!res.ok) {
+                        setResumeError(data.error ?? "Extraction failed.");
+                        return;
+                      }
+                      await storeResume(resumeFile);
+                      setStoredResumeName(resumeFile.name);
+                      const extracted = data.pastExperiences ?? [];
+                      if (extracted.length > 0) {
+                        setDraft((c) => ({
+                          ...c,
+                          pastExperiences: [...new Set([...(c.pastExperiences ?? []), ...extracted])],
+                        }));
+                      }
+                      setResumeTips(data.tips ?? []);
+                    } catch (e) {
+                      setResumeError(e instanceof Error ? e.message : "Extraction failed.");
+                    } finally {
+                      setResumeExtracting(false);
+                    }
+                  }}
+                >
+                  {resumeExtracting ? "Extracting…" : "Extract & prefill"}
+                </Button>
+              )}
+            </div>
+            {resumeError && <p className="text-sm text-red-600" role="alert">{resumeError}</p>}
+            {resumeTips.length > 0 && (
+              <div className="rounded-lg bg-emerald-50 px-3 py-2">
+                <p className="text-xs font-medium text-emerald-800">Personalized tips:</p>
+                <ul className="mt-1 list-inside list-disc text-sm text-emerald-700">
+                  {resumeTips.map((t, i) => (
+                    <li key={i}>{t}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </CardContent>
         </Card>
 

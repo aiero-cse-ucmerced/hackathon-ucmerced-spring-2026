@@ -72,6 +72,9 @@ export default function CookiePolicyPage() {
                       Duration
                     </th>
                     <th className="border border-zinc-200 px-4 py-3 text-left text-sm font-semibold text-zinc-900">
+                      Security
+                    </th>
+                    <th className="border border-zinc-200 px-4 py-3 text-left text-sm font-semibold text-zinc-900">
                       Type
                     </th>
                   </tr>
@@ -79,7 +82,7 @@ export default function CookiePolicyPage() {
                 <tbody>
                   <tr>
                     <td className="border border-zinc-200 px-4 py-3 text-sm">
-                      Session / auth cookie
+                      <code className="rounded bg-zinc-100 px-1.5 py-0.5">ua_rest_api_key</code>
                     </td>
                     <td className="border border-zinc-200 px-4 py-3 text-sm">
                       Authenticate API requests; enforce rate limits (5000/hr
@@ -89,18 +92,24 @@ export default function CookiePolicyPage() {
                       Session or configurable
                     </td>
                     <td className="border border-zinc-200 px-4 py-3 text-sm">
+                      Secure, HttpOnly, SameSite=Strict
+                    </td>
+                    <td className="border border-zinc-200 px-4 py-3 text-sm">
                       Strictly necessary
                     </td>
                   </tr>
                   <tr>
                     <td className="border border-zinc-200 px-4 py-3 text-sm">
-                      cf_clearance
+                      <code className="rounded bg-zinc-100 px-1.5 py-0.5">cf_clearance</code>
                     </td>
                     <td className="border border-zinc-200 px-4 py-3 text-sm">
                       Cloudflare Turnstile bot detection on signup
                     </td>
                     <td className="border border-zinc-200 px-4 py-3 text-sm">
                       Varies
+                    </td>
+                    <td className="border border-zinc-200 px-4 py-3 text-sm">
+                      Managed by Cloudflare
                     </td>
                     <td className="border border-zinc-200 px-4 py-3 text-sm">
                       Strictly necessary
@@ -115,6 +124,9 @@ export default function CookiePolicyPage() {
                     </td>
                     <td className="border border-zinc-200 px-4 py-3 text-sm">
                       Session
+                    </td>
+                    <td className="border border-zinc-200 px-4 py-3 text-sm">
+                      Secure, HttpOnly where applicable
                     </td>
                     <td className="border border-zinc-200 px-4 py-3 text-sm">
                       Strictly necessary
@@ -139,10 +151,11 @@ export default function CookiePolicyPage() {
               <li>Protect your account and our systems from abuse</li>
             </ul>
             <p className="mt-4 leading-relaxed">
-              Today, some parts of our app may use browser storage (e.g.
-              localStorage) for auth tokens. As our backend is fully deployed,
-              HTTP-only cookies will be used for session management where
-              appropriate for security.
+              Our auth cookie (<code className="rounded bg-zinc-100 px-1.5 py-0.5">ua_rest_api_key</code>) is set with security best practices:
+              <strong> Secure</strong> (HTTPS only), <strong>HttpOnly</strong> (not accessible to JavaScript, reducing XSS risk),
+              and <strong>SameSite=Strict</strong> (mitigates CSRF). We do not set a Domain attribute so only the exact host can read it.
+              Today, some parts of our app may also use browser storage (e.g. localStorage) for auth tokens; we are moving toward
+              HTTP-only cookies for session management where appropriate.
             </p>
           </section>
 

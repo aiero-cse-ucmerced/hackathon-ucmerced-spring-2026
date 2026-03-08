@@ -179,6 +179,10 @@ export async function getProfile(token?: string): Promise<UserProfile | null> {
           pastExperiences: data.pastExperiences ?? [],
         };
         localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+        // Returning users: if profile has interests from API, consider onboarding complete
+        if (profile.interests && profile.interests.length >= 3) {
+          setOnboardingComplete();
+        }
         return profile;
       }
     } catch (e) {
@@ -239,7 +243,7 @@ export async function patchProfile(
       minScore: payload.minScore ?? existing?.minScore,
     };
     localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(merged));
-    setOnboardingComplete();
+    // Do NOT set onboarding complete here – only OnboardingFlow does that when user clicks Finish.
   } else {
     merged = {
       ...next,

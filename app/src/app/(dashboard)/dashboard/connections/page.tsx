@@ -1,6 +1,6 @@
 "use client";
 
-import { ViewTransitionLink } from "@/components/ViewTransitionLink";
+import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 
 const CONNECTIONS = [
@@ -17,10 +17,10 @@ export default function ConnectionsIndexPage() {
   if (!user) return null;
 
   return (
-    <div className="space-y-6" style={{ viewTransitionName: "vt-content" }}>
+    <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <ViewTransitionLink
+          <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 rounded-md"
             aria-label="Back to dashboard"
@@ -29,7 +29,7 @@ export default function ConnectionsIndexPage() {
               <path d="m15 18-6-6 6-6" />
             </svg>
             Back to dashboard
-          </ViewTransitionLink>
+          </Link>
           <h1 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-900 md:text-3xl">
             Connections
           </h1>
@@ -40,7 +40,7 @@ export default function ConnectionsIndexPage() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {CONNECTIONS.map((item) => (
-          <ViewTransitionLink
+          <Link
             key={item.slug}
             href={`/dashboard/connections/${item.slug}`}
             className="group flex min-h-[7rem] flex-col rounded-xl border border-zinc-200 bg-white p-4 text-left shadow-sm transition-colors hover:border-zinc-300 hover:bg-zinc-50/80 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2"
@@ -53,7 +53,7 @@ export default function ConnectionsIndexPage() {
                 <path d="m9 18 6-6-6-6" />
               </svg>
             </span>
-          </ViewTransitionLink>
+          </Link>
         ))}
       </div>
     </div>
