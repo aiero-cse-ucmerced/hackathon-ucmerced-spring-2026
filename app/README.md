@@ -34,3 +34,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Troubleshooting
+
+### `EPERM: operation not permitted, unlink` (Windows)
+
+A process has a file in `node_modules` open (e.g. Next.js SWC or `workerd.exe`). Fix it:
+
+1. **Stop everything** using the app: close all terminals running `yarn dev` / `npm run dev`, and close Cursor/VS Code (or at least its terminal and the project).
+2. **Delete `node_modules`** (File Explorer, or in a new terminal: `rmdir /s /q node_modules` from the `app` folder).
+3. **Install again** in a new terminal: `yarn install` or `npm install`.
+
+If the project is under **OneDrive**, sync can lock files. Pause OneDrive sync, move the project to a non-synced path (e.g. `C:\dev\UncookedAura`), or exclude `node_modules` from OneDrive.
