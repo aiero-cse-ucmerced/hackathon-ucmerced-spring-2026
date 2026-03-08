@@ -25,9 +25,10 @@ For local Cloudflare preview, copy `.dev.vars.example` to `.dev.vars` and set `N
 
 ## Deploy this frontend to Cloudflare
 
-**Public deployments (Cloudflare Build):** Use **npm** so the build command and internal OpenNext step stay consistent.
+**Public deployments (Cloudflare Build):** Use **npm** and the exact commands below. You must use `npm run` (not `npm`) to run scripts.
 
-- **Build command:** `npm run build:cloudflare`
+- **Build command:** `npm run build:cloudflare`  
+  (If you type `npm build:cloudflare` without `run`, npm will fail with "Unknown command".)
 - **Deploy command:** `npx wrangler deploy`
 
 OpenNext runs the repo’s `build` script internally (e.g. `npm run build` → Next.js). Use **Root directory** `app` if the app lives in the `app` folder.
