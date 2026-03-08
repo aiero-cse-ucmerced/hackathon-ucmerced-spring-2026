@@ -111,6 +111,18 @@ export default function ProfilePage() {
     });
   }, []);
 
+  const toggleMajor = useCallback((value: string) => {
+    setDraft((current) => {
+      const exists = current.majors.includes(value);
+      return {
+        ...current,
+        majors: exists
+          ? current.majors.filter((x) => x !== value)
+          : [...current.majors, value],
+      };
+    });
+  }, []);
+
   function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
